@@ -1,0 +1,128 @@
+#!/usr/bin/env perl
+###
+### Munin plugin for CouchDB HTTP request method monitoring
+###
+
+# Parameters:
+#
+# config
+# autoconf
+
+#%# family=auto
+#%# capabilities=autoconf
+
+=head1 NAME
+
+couchdb_httpd_request_methods - Munin plugin to monitor the breakdown of HTTP
+requests to CouchDB servers.
+
+=head1 APPLICABLE SYSTEMS
+
+CouchDB servers with statistics enabled.
+
+=head1 CONFIGURATION
+
+=head2 Environment variables
+
+=over
+
+=item *
+
+B<uri>: Set the URI for access to the _stats endpoint for the target CouchDB
+instance. This defaults to B<http://localhost:5984/_stats>.
+
+=back
+
+=head1 INTERPRETATION
+
+The plugin shows the breakdown of HTTP requests to the CouchDB server by HTTP
+verb.
+
+=head1 BUGS
+
+Yep.
+
+=head1 AUTHOR
+
+Gordon Stratton <gordon.stratton@gmail.com>
+
+=head1 LICENSE
+
+Beerware
+
+=cut
+
+my $ret = undef;
+
+if (!eval("require LWP::UserAgent;")) {
+	$ret = "LWP::UserAgent not found";
+}
+
+if (!eval("require JSON;")) {
+	$ret = "JSON not found";
+}
+
+my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984/_stats";
+my @HTTP_VERBS = ('get', 'put', 'post', 'delete', 'copy', 'head', 'move');
+
+if (@HTTP_VERBS < 1) {
+	$ret = "No HTTP verbs specified";
+}
+
+if (defined($ARGV[0]) && $ARGV[0] eq "autoconf")
+{
+	if ($ret)
+	{
+		print "no ($ret)\n";
+		exit 1;
+	}
+
+	my $response = LWP::UserAgent->new(timeout => 5)->request(HTTP::Request->new('GET', $URI));
+
+	if ($response->is_success) {
+		print "yes\n";
+		exit 0;
+	} else {
+		print "no\n";
+		exit 1;
+	}
+}
+
+if (defined($ARGV[0]) && $ARGV[0] eq "config") {
+	print "graph_title CouchDB httpd request methods\n";
+	print "graph_args --base 1000\n";
+	print "graph_vlabel requests / \${graph_period}\n";
+	print "graph_category couchdb\n";
+	print "$HTTP_VERBS[0].label HTTP " . uc($HTTP_VERBS[0]) . "\n";
+	print "$HTTP_VERBS[0].type COUNTER\n";
+	print "$HTTP_VERBS[0].min 0\n";
+	print "$HTTP_VERBS[0].max 1000000\n";
+	print "$HTTP_VERBS[0].draw AREA\n";
+	foreach (@HTTP_VERBS[1..scalar(@HTTP_VERBS) - 1]) {
+		print "$_.label HTTP " . uc($_) . "\n";
+		print "$_.type COUNTER\n";
+		print "$_.min 0\n";
+		print "$_.max 1000000\n";
+		print "$_.draw STACK\n";
+	}
+	exit 0;
+}
+
+
+my $response = LWP::UserAgent->new(timeout => 5)->request(HTTP::Request->new('GET', $URI));
+
+if ($response->is_success) {
+	my $json = JSON::decode_json($response->content);
+	foreach (@HTTP_VERBS) {
+		if (defined($json->{'httpd_request_methods'}->{uc($_)})) {
+			$ucmethod = uc($_);
+			print "$_.value $json->{'httpd_request_methods'}->{$ucmethod}->{'current'}\n";
+		} else {
+			print "$_.value U\n";
+		}
+	}
+} else {
+	foreach (@HTTP_VERBS) {
+		print "$_.value U\n";
+	}
+}

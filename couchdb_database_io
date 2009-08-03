@@ -1,0 +1,111 @@
+#!/usr/bin/env perl
+###
+### Munin plugin for CouchDB database I/O monitoring
+###
+
+# Parameters:
+#
+# config
+# autoconf
+
+#%# family=auto
+#%# capabilities=autoconf
+
+=head1 NAME
+
+couchdb_database_io - Munin plugin to monitor CouchDB database I/O
+
+=head1 APPLICABLE SYSTEMS
+
+CouchDB servers with statistics enabled.
+
+=head1 CONFIGURATION
+
+=head2 Environment variables
+
+=over
+
+=item *
+
+B<uri>: Set the URI for access to the _stats endpoint for the target CouchDB
+instance. This defaults to B<http://localhost:5984/_stats>.
+
+=back
+
+=head1 INTERPRETATION
+
+The plugin shows the internal count of database reads as well as writes.
+
+=head1 BUGS
+
+Yep.
+
+=head1 AUTHOR
+
+Gordon Stratton <gordon.stratton@gmail.com>
+
+=head1 LICENSE
+
+Beerware
+
+=cut
+
+my $ret = undef;
+
+if (!eval("require LWP::UserAgent;")) {
+	$ret = "LWP::UserAgent not found";
+}
+
+if (!eval("require JSON;")) {
+	$ret = "JSON not found";
+}
+
+my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984/_stats";
+
+if (defined($ARGV[0]) && $ARGV[0] eq "autoconf")
+{
+	if ($ret)
+	{
+		print "no ($ret)\n";
+		exit 1;
+	}
+
+	my $response = LWP::UserAgent->new(timeout => 5)->request(HTTP::Request->new('GET', $URI));
+
+	if ($response->is_success) {
+		print "yes\n";
+		exit 0;
+	} else {
+		print "no\n";
+		exit 1;
+	}
+}
+
+if (defined($ARGV[0]) && $ARGV[0] eq "config") {
+	print "graph_title CouchDB database I/O statistics\n";
+	print "graph_args --base 1000\n";
+	print "graph_vlabel number of reads (-) and writes (+) / \${graph_period}\n";
+	print "graph_category couchdb\n";
+	print "reads.label reads\n";
+	print "reads.graph no\n";
+	print "reads.type COUNTER\n";
+	print "reads.min 0\n";
+	print "reads.max 1000000\n";
+	print "writes.label reads/writes\n";
+	print "writes.type COUNTER\n";
+	print "writes.min 0\n";
+	print "writes.max 1000000\n";
+	print "writes.negative reads\n";
+	exit 0;
+}
+
+my $response = LWP::UserAgent->new(timeout => 5)->request(HTTP::Request->new('GET', $URI));
+
+if ($response->is_success) {
+	my $json = JSON::decode_json($response->content);
+	print "reads.value $json->{'couchdb'}->{'database_reads'}->{'current'}\n";
+	print "writes.value $json->{'couchdb'}->{'database_writes'}->{'current'}\n";
+} else {
+	print "reads.value U\n";
+	print "writes.value U\n";
+}
