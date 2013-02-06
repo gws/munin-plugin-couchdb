@@ -85,17 +85,17 @@ if (defined($ARGV[0]) && $ARGV[0] eq "config") {
 	print "graph_title CouchDB request times\n";
 	print "graph_vlabel request times (in ms)\n";
 	print "graph_category couchdb\n";
-	print "stddev60.label Standard Deviation (last 1 minute)\n";
+	print "stddev60.label stddev60\n";
 	print "stddev60.graph no\n";
-	print "mean60.label Average request times (last 1 minute)\n";
+	print "mean60.label mean/stddev (1 minute)\n";
 	print "mean60.negative stddev60\n";
-	print "stddev300.label Standard Deviation (last 5 minutes)\n";
+	print "stddev300.label stddev300\n";
 	print "stddev300.graph no\n";
-	print "mean300.label Average request times (last 5 minutes)\n";
+	print "mean300.label mean/stddev (5 minutes)\n";
 	print "mean300.negative stddev300\n";
-	print "stddev900.label Standard Deviation (last 15 minutes)\n";
+	print "stddev900.label stddev900\n";
 	print "stddev900.graph no\n";
-	print "mean900.label Average request times (last 15 minutes)\n";
+	print "mean900.label mean/stddev (15 minutes)\n";
 	print "mean900.negative stddev900\n";
 	exit 0;
 }
