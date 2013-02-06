@@ -1,0 +1,109 @@
+#!/usr/bin/env perl
+###
+### Munin plugin for CouchDB request time statistics
+###
+
+# Parameters:
+#
+# config
+# autoconf
+
+#%# family=auto
+#%# capabilities=autoconf
+
+=head1 NAME
+
+couchdb_request_times - Munin plugin to monitor CouchDB request time statistics
+
+=head1 APPLICABLE SYSTEMS
+
+CouchDB servers with statistics enabled.
+
+=head1 CONFIGURATION
+
+=head2 Environment variables
+
+=over
+
+=item *
+
+B<uri>: Set the URI for access to the _stats endpoint for the target CouchDB
+instance. This defaults to B<http://localhost:5984/_stats>.
+
+=back
+
+=head1 INTERPRETATION
+
+The plugin shows the mean and stddev for request times (excluding Mochiweb)
+
+=head1 BUGS
+
+Yep.
+
+=head1 AUTHOR
+
+Gordon Stratton <gordon.stratton@gmail.com>
+
+=head1 LICENSE
+
+Beerware
+
+=cut
+
+my $ret = undef;
+
+if (!eval("require LWP::UserAgent;")) {
+	$ret = "LWP::UserAgent not found";
+}
+
+if (!eval("require JSON;")) {
+	$ret = "JSON not found";
+}
+
+my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984/_stats";
+
+if (defined($ARGV[0]) && $ARGV[0] eq "autoconf")
+{
+	if ($ret)
+	{
+		print "no ($ret)\n";
+		exit 1;
+	}
+
+	my $response = LWP::UserAgent->new(timeout => 5)->request(HTTP::Request->new('GET', $URI));
+
+	if ($response->is_success) {
+		print "yes\n";
+		exit 0;
+	} else {
+		print "no\n";
+		exit 1;
+	}
+}
+
+if (defined($ARGV[0]) && $ARGV[0] eq "config") {
+	print "graph_title CouchDB request times\n";
+	print "graph_vlabel request times\n";
+	print "graph_category couchdb\n";
+	print "mean60.label Average request times (last 1 minute)\n";
+	print "stddev60.label Standard Deviation (last 1 minute)\n";
+	print "mean300.label Average request times (last 5 minutes)\n";
+	print "stddev300.label Standard Deviation (last 5 minutes)\n";
+	print "mean900.label Average request times (last 15 minutes)\n";
+	print "stddev900.label Standard Deviation (last 15 minutes)\n";
+	exit 0;
+}
+
+@times = (60, 300, 900);
+foreach(@times) {
+	my $ranged_uri = "$URI/couchdb/request_time?range=$_";
+	my $response = LWP::UserAgent->new(timeout => 5)->request(HTTP::Request->new('GET', $ranged_uri));
+	if ($response->is_success) {
+		my $json = JSON::decode_json($response->content);
+		print "mean$_.value $json->{'couchdb'}->{'request_time'}->{'mean'}\n";
+		print "stddev$_.value $json->{'couchdb'}->{'request_time'}->{'stddev'}\n";
+	} else {
+		print "mean$_.value U\n";
+		print "stddev$_.value U\n";
+	}
+}
