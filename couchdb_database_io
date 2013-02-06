@@ -90,11 +90,9 @@ if (defined($ARGV[0]) && $ARGV[0] eq "config") {
 	print "reads.graph no\n";
 	print "reads.type COUNTER\n";
 	print "reads.min 0\n";
-	print "reads.max 1000000\n";
 	print "writes.label reads/writes\n";
 	print "writes.type COUNTER\n";
 	print "writes.min 0\n";
-	print "writes.max 1000000\n";
 	print "writes.negative reads\n";
 	exit 0;
 }

@@ -95,11 +95,12 @@ if (defined($ARGV[0]) && $ARGV[0] eq "config") {
 	foreach (@REQUEST_TYPES) {
 		if ($response->is_success) {
 			my $json = JSON::decode_json($response->content);
-			print "$_.label $json->{'httpd'}->{$_}->{'description'}\n";
+			my $desc = $json->{'httpd'}->{$_}->{'description'};
+			$desc =~ s/^number of //;
+			print "$_.label $desc\n";
 		}
 		print "$_.type COUNTER\n";
 		print "$_.min 0\n";
-		print "$_.max 1000000\n";
 	}
 	exit 0;
 }

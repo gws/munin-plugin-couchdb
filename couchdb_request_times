@@ -83,7 +83,7 @@ if (defined($ARGV[0]) && $ARGV[0] eq "autoconf")
 
 if (defined($ARGV[0]) && $ARGV[0] eq "config") {
 	print "graph_title CouchDB request times\n";
-	print "graph_vlabel request times\n";
+	print "graph_vlabel request times (in ms)\n";
 	print "graph_category couchdb\n";
 	print "mean60.label Average request times (last 1 minute)\n";
 	print "stddev60.label Standard Deviation (last 1 minute)\n";
