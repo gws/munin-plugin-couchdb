@@ -94,17 +94,17 @@ if (defined($ARGV[0]) && $ARGV[0] eq "config") {
 	print "graph_args --base 1000\n";
 	print "graph_vlabel requests / \${graph_period}\n";
 	print "graph_category couchdb\n";
-	print "$HTTP_CODES[0].label HTTP " . uc($HTTP_CODES[0]) . "\n";
-	print "$HTTP_CODES[0].type COUNTER\n";
-	print "$HTTP_CODES[0].min 0\n";
-	print "$HTTP_CODES[0].max 1000000\n";
-	print "$HTTP_CODES[0].draw AREA\n";
+	print "http$HTTP_CODES[0].label HTTP " . uc($HTTP_CODES[0]) . "\n";
+	print "http$HTTP_CODES[0].type COUNTER\n";
+	print "http$HTTP_CODES[0].min 0\n";
+	print "http$HTTP_CODES[0].max 1000000\n";
+	print "http$HTTP_CODES[0].draw AREA\n";
 	foreach (@HTTP_CODES[1..scalar(@HTTP_CODES) - 1]) {
-		print "$_.label HTTP " . uc($_) . "\n";
-		print "$_.type COUNTER\n";
-		print "$_.min 0\n";
-		print "$_.max 1000000\n";
-		print "$_.draw STACK\n";
+		print "http$_.label HTTP " . uc($_) . "\n";
+		print "http$_.type COUNTER\n";
+		print "http$_.min 0\n";
+		print "http$_.max 1000000\n";
+		print "http$_.draw STACK\n";
 	}
 	exit 0;
 }
@@ -117,13 +117,13 @@ if ($response->is_success) {
 	foreach (@HTTP_CODES) {
 		if (defined($json->{'httpd_status_codes'}->{uc($_)})) {
 			$ucmethod = uc($_);
-			print "$_.value $json->{'httpd_status_codes'}->{$ucmethod}->{'current'}\n";
+			print "http$_.value $json->{'httpd_status_codes'}->{$ucmethod}->{'current'}\n";
 		} else {
-			print "$_.value U\n";
+			print "http$_.value U\n";
 		}
 	}
 } else {
 	foreach (@HTTP_CODES) {
-		print "$_.value U\n";
+		print "http$_.value U\n";
 	}
 }
