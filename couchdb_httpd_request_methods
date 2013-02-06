@@ -63,7 +63,7 @@ if (!eval("require JSON;")) {
 }
 
 my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984/_stats";
-my @HTTP_VERBS = ('get', 'put', 'post', 'delete', 'copy', 'head', 'move');
+my @HTTP_VERBS = ('get', 'put', 'post', 'delete', 'copy', 'head');
 
 if (@HTTP_VERBS < 1) {
 	$ret = "No HTTP verbs specified";
