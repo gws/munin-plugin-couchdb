@@ -97,7 +97,7 @@ if (defined($ARGV[0]) && $ARGV[0] eq "config") {
 	print "graph_vlabel responses / \${graph_period}\n";
 	print "graph_category couchdb\n";
 	print "http$HTTP_CODES[0].label HTTP " . uc($HTTP_CODES[0]) . "\n";
-	print "http$HTTP_CODES[0].type COUNTER\n";
+	print "http$HTTP_CODES[0].type DERIVE\n";
 	print "http$HTTP_CODES[0].min 0\n";
 	print "http$HTTP_CODES[0].draw AREA\n";
 	foreach (@HTTP_CODES[1..scalar(@HTTP_CODES) - 1]) {
@@ -108,7 +108,7 @@ if (defined($ARGV[0]) && $ARGV[0] eq "config") {
 			$desc =~ s/ responses$//;
 			print "http$_.label $desc\n";
 		}
-		print "http$_.type COUNTER\n";
+		print "http$_.type DERIVE\n";
 		print "http$_.min 0\n";
 		print "http$_.draw STACK\n";
 	}

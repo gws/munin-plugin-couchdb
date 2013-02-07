@@ -99,7 +99,7 @@ if (defined($ARGV[0]) && $ARGV[0] eq "config") {
 			$desc =~ s/^number of //;
 			print "$_.label $desc\n";
 		}
-		print "$_.type COUNTER\n";
+		print "$_.type DERIVE\n";
 		print "$_.min 0\n";
 	}
 	exit 0;
