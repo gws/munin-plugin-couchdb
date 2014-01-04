@@ -1,0 +1,371 @@
+#!/usr/bin/env perl
+
+=head1 NAME
+
+Munin monitoring plugin for Apache CouchDB.
+
+=head1 APPLICABLE SYSTEMS
+
+=over 4
+
+=item Apache CouchDB server with statistics enabled.
+
+=item Perl with LWP::UserAgent and JSON modules.
+
+=back
+
+=head1 CONFIGURATION
+
+Example of the default configuration:
+
+    [couchdb]
+    env.uri    http://localhost:5984/_stats
+
+=head2 Environment variables
+
+=over
+
+=item *
+
+B<uri>: Set the URI for access to the _stats endpoint for the target CouchDB
+instance. This defaults to B<http://localhost:5984/_stats>.
+
+=back
+
+=head1 USAGE
+
+Link this plugin to /etc/munin/plugins/ and restart the munin-node.
+
+=head1 AUTHORS
+
+=over 4
+
+=item Gordon Stratton <gordon.stratton@gmail.com>
+
+Original author.
+
+=item Nicholas A. Evans <nevans@410labs.com>
+
+Extend plugin to handle more stats. Various useful tweaks.
+
+=item Alexander Shorin <kxepal@gmail.com>
+
+Multigraph version.
+
+=back
+
+=head1 LICENSE
+
+Beerware
+
+=head1 VERSION
+
+git-master
+
+=head1 MAGICK MARKERS
+
+  #%# family=auto
+  #%# capabilities=autoconf
+
+=cut
+
+use strict;
+use warnings;
+use Munin::Plugin;
+
+need_multigraph();
+
+
+
+my $err = undef;
+
+if (!eval("require LWP::UserAgent;")) {
+    $err = "LWP::UserAgent not found";
+}
+
+if (!eval("require JSON;")) {
+    $err = "JSON not found";
+}
+
+my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984/_stats";
+
+
+
+sub main {
+    my $mode = shift || 'stats';
+    my $response = LWP::UserAgent->new(timeout => 5)
+                                 ->request(HTTP::Request->new('GET', $URI));
+    my $json = undef;
+
+    if ($response->is_success) {
+        $json = JSON::decode_json($response->content);
+    }
+
+    if ($mode eq 'autoconf') {
+        if (defined($err)) {
+            print "no ($err)\n";
+            exit 1;
+        } elsif ($response->is_success) {
+            print "yes\n";
+            exit 0;
+        } else {
+            print "no\n";
+            exit 1;
+        }
+    } elsif (($mode eq 'config') && (!$response->is_success)) {
+        print "Unable to fetch stats from $URI\n";
+        exit 1;
+    }
+
+    database_io($json, $mode);
+    httpd_request_methods($json, $mode);
+    httpd_requests($json, $mode);
+    httpd_status_codes($json, $mode);
+    open_databases($json, $mode);
+    open_files($json, $mode);
+    request_times($json, $mode);
+}
+
+
+
+sub database_io {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_database_io\n";
+    if ($mode eq 'config'){
+        print "graph_title CouchDB database I/O statistics\n";
+        print "graph_args --base 1000\n";
+        print "graph_vlabel number of reads (-) and writes (+) / \${graph_period}\n";
+        print "graph_category couchdb\n";
+        print "reads.label reads\n";
+        print "reads.graph no\n";
+        print "reads.type DERIVE\n";
+        print "reads.min 0\n";
+        print "writes.label reads/writes\n";
+        print "writes.type DERIVE\n";
+        print "writes.min 0\n";
+        print "writes.negative reads\n";
+    } else {
+        if (defined($json)) {
+            my $reads = $json->{'couchdb'}->{'database_reads'}->{'current'} || 0;
+            my $writes = $json->{'couchdb'}->{'database_writes'}->{'current'} || 0;
+            print "reads.value $reads\n";
+            print "writes.value $writes\n";
+        } else {
+            print "reads.value U\n";
+            print "writes.value U\n";
+        }
+    }
+}
+
+
+
+sub httpd_request_methods {
+    my ($json, $mode) = @_;
+    my @http_verbs = ('get', 'put', 'post', 'delete', 'copy', 'head');
+
+    print "multigraph couchdb_httpd_request_methods\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB httpd request methods\n";
+        print "graph_args --base 1000\n";
+        print "graph_vlabel requests / \${graph_period}\n";
+        print "graph_category couchdb\n";
+        print "$http_verbs[0].label HTTP " . uc($http_verbs[0]) . "\n";
+        print "$http_verbs[0].type DERIVE\n";
+        print "$http_verbs[0].min 0\n";
+        print "$http_verbs[0].draw AREA\n";
+        foreach (@http_verbs[1..scalar(@http_verbs) - 1]) {
+            print "$_.label HTTP " . uc($_) . "\n";
+            print "$_.type DERIVE\n";
+            print "$_.min 0\n";
+            print "$_.draw STACK\n";
+        }
+    } else {
+        if (defined($json)) {
+            foreach (@http_verbs) {
+                if (defined($json->{'httpd_request_methods'}->{uc($_)})) {
+                    my $value = $json->{'httpd_request_methods'}
+                                     ->{uc($_)}
+                                     ->{'current'} || 0;
+                    print "$_.value $value\n";
+                } else {
+                    print "$_.value U\n";
+                }
+            }
+        } else {
+            foreach (@http_verbs) {
+                print "$_.value U\n";
+            }
+        }
+    }
+}
+
+
+
+sub httpd_requests {
+    my ($json, $mode) = @_;
+    my @request_types = ('requests', 'bulk_requests',
+                         'clients_requesting_changes',
+                         'view_reads', 'temporary_view_reads');
+
+    print "multigraph couchdb_httpd_requests\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB httpd requests\n";
+        print "graph_args --base 1000\n";
+        print "graph_vlabel requests / \${graph_period}\n";
+        print "graph_category couchdb\n";
+        foreach (@request_types) {
+            my $desc = $json->{'httpd'}->{$_}->{'description'};
+            $desc =~ s/^number of //;
+            print "$_.label $desc\n";
+            print "$_.type DERIVE\n";
+            print "$_.min 0\n";
+        }
+    } else {
+        if (defined($json)) {
+            foreach (@request_types) {
+                if (defined($json->{'httpd'}->{$_})) {
+                    my $value = $json->{'httpd'}->{$_}->{'current'} || 0;
+                    print "$_.value $value\n";
+                } else {
+                    print "$_.value U\n";
+                }
+            }
+        } else {
+            foreach (@request_types) {
+                print "$_.value U\n";
+            }
+        }
+    }
+}
+
+
+
+sub httpd_status_codes {
+    my ($json, $mode) = @_;
+    my @http_codes = ('200', '201', '202',
+                      '301', '304',
+                      '400', '401', '404', '405', '409', '412',
+                      '500');
+
+    print "multigraph couchdb_httpd_status_codes\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB httpd status codes\n";
+        print "graph_args --base 1000\n";
+        print "graph_vlabel responses / \${graph_period}\n";
+        print "graph_category couchdb\n";
+        print "http$http_codes[0].label HTTP " . uc($http_codes[0]) . "\n";
+        print "http$http_codes[0].type DERIVE\n";
+        print "http$http_codes[0].min 0\n";
+        print "http$http_codes[0].draw AREA\n";
+        foreach (@http_codes[1..scalar(@http_codes) - 1]) {
+            my $desc = $json->{'httpd_status_codes'}->{$_}->{'description'};
+            $desc =~ s/^number of //;
+            $desc =~ s/ responses$//;
+            print "http$_.label $desc\n";
+            print "http$_.type DERIVE\n";
+            print "http$_.min 0\n";
+            print "http$_.draw STACK\n";
+        }
+    } elsif (defined($json)) {
+        foreach (@http_codes) {
+            if (defined($json->{'httpd_status_codes'}->{uc($_)})) {
+                my $value = $json->{'httpd_status_codes'}
+                                 ->{uc($_)}
+                                 ->{'current'} || 0;
+                print "http$_.value $value\n";
+            } else {
+                print "http$_.value U\n";
+            }
+        }
+    } else {
+        foreach (@http_codes) {
+            print "http$_.value U\n";
+        }
+    }
+}
+
+
+
+sub open_databases {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_open_databases\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB open databases\n";
+        print "graph_vlabel open databases\n";
+        print "graph_category couchdb\n";
+        print "dbs.label open databases\n";
+    } elsif (defined($json)) {
+        my $value = $json->{'couchdb'}->{'open_databases'}->{'current'} || 0;
+        print "dbs.value $value\n";
+    } else {
+        print "dbs.value U\n";
+    }
+}
+
+
+
+sub open_files {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_open_files\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB open files\n";
+        print "graph_vlabel open file descriptors\n";
+        print "graph_category couchdb\n";
+        print "files.label open file descriptors\n";
+    } elsif (defined($json)) {
+        my $value = $json->{'couchdb'}->{'open_os_files'}->{'current'} || 0;
+        print "files.value $value\n";
+    } else {
+        print "files.value U\n";
+    }
+}
+
+
+
+sub request_times {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_request_times\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB request times\n";
+        print "graph_vlabel request times (in ms)\n";
+        print "graph_category couchdb\n";
+        print "stddev60.label stddev60\n";
+        print "stddev60.graph no\n";
+        print "mean60.label stddev/mean (1 minute)\n";
+        print "mean60.negative stddev60\n";
+        print "stddev300.label stddev300\n";
+        print "stddev300.graph no\n";
+        print "mean300.label stddev/mean (5 minutes)\n";
+        print "mean300.negative stddev300\n";
+        print "stddev900.label stddev900\n";
+        print "stddev900.graph no\n";
+        print "mean900.label stddev/mean (15 minutes)\n";
+        print "mean900.negative stddev900\n";
+    } else {
+        my @times = (60, 300, 900);
+        foreach(@times) {
+            my $ranged_uri = "$URI/couchdb/request_time?range=$_";
+            my $response = LWP::UserAgent->new(timeout => 5)
+                                         ->request(HTTP::Request->new('GET', $ranged_uri));
+            if ($response->is_success) {
+                my $json = JSON::decode_json($response->content);
+                my $stdev = $json->{'couchdb'}
+                                 ->{'request_time'}
+                                 ->{'stddev'} || 0;
+                my $mean = $json->{'couchdb'}->{'request_time'}->{'mean'} || 0;
+                print "stddev$_.value $stdev\n";
+                print "mean$_.value $mean\n";
+            } else {
+                print "stddev$_.value U\n";
+                print "mean$_.value U\n";
+            }
+        }
+    }
+}
+
+
+main($ARGV[0]);
