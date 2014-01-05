@@ -117,6 +117,7 @@ sub main {
         exit 1;
     }
 
+    clients_requesting_changes($json, $mode);
     database_io($json, $mode);
     httpd_request_methods($json, $mode);
     httpd_requests($json, $mode);
@@ -124,6 +125,38 @@ sub main {
     open_databases($json, $mode);
     open_files($json, $mode);
     request_times($json, $mode);
+}
+
+
+
+sub clients_requesting_changes {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_clients_requesting_changes\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB clients for continuous changes feeds\n";
+        print "graph_args --base 1000 -l 0\n";
+        print "graph_vlabel clients\n";
+        print "graph_category couchdb\n";
+        print "graph_scale no\n";
+        print "graph_printf %.0lf\n";
+        my $desc = $json->{'httpd'}
+                        ->{'clients_requesting_changes'}
+                        ->{'description'};
+        $desc =~ s/^number of //;
+        print "clients_requesting_changes.draw AREASTACK\n";
+        print "clients_requesting_changes.label $desc\n";
+        print "clients_requesting_changes.min 0\n";
+    } else {
+        if (defined($json)) {
+            my $value = $json->{'httpd'}
+                             ->{'clients_requesting_changes'}
+                             ->{'current'} || 0;
+            print "clients_requesting_changes.value $value\n";
+        } else {
+            print "clients_requesting_changes.value U\n";
+        }
+    }
 }
 
 
@@ -205,7 +238,6 @@ sub httpd_request_methods {
 sub httpd_requests {
     my ($json, $mode) = @_;
     my @request_types = ('requests', 'bulk_requests',
-                         'clients_requesting_changes',
                          'view_reads', 'temporary_view_reads');
 
     print "multigraph couchdb_httpd_requests\n";
