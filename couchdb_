@@ -327,6 +327,9 @@ sub open_databases {
         print "graph_title CouchDB open databases\n";
         print "graph_vlabel open databases\n";
         print "graph_category couchdb\n";
+        print "graph_scale no\n";
+        print "graph_printf %.0lf\n";
+        print "dbs.draw AREASTACK\n";
         print "dbs.label open databases\n";
     } elsif (defined($json)) {
         my $value = $json->{'couchdb'}->{'open_databases'}->{'current'} || 0;
@@ -346,6 +349,9 @@ sub open_files {
         print "graph_title CouchDB open files\n";
         print "graph_vlabel open file descriptors\n";
         print "graph_category couchdb\n";
+        print "graph_scale no\n";
+        print "graph_printf %.0lf\n";
+        print "files.draw AREASTACK\n";
         print "files.label open file descriptors\n";
     } elsif (defined($json)) {
         my $value = $json->{'couchdb'}->{'open_os_files'}->{'current'} || 0;
