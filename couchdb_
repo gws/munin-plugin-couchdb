@@ -212,15 +212,13 @@ sub httpd_request_methods {
         print "graph_args --base 1000\n";
         print "graph_vlabel requests / \${graph_period}\n";
         print "graph_category couchdb\n";
-        print "$http_verbs[0].label HTTP " . uc($http_verbs[0]) . "\n";
-        print "$http_verbs[0].type DERIVE\n";
-        print "$http_verbs[0].min 0\n";
-        print "$http_verbs[0].draw AREA\n";
-        foreach (@http_verbs[1..scalar(@http_verbs) - 1]) {
+        foreach (@http_verbs) {
+            my $desc = $json->{'httpd_request_methods'}->{$_}->{'description'};
+            $desc =~ s/^number of //;
             print "$_.label HTTP " . uc($_) . "\n";
             print "$_.type DERIVE\n";
             print "$_.min 0\n";
-            print "$_.draw STACK\n";
+            print "$_.draw AREASTACK\n";
         }
     } else {
         if (defined($json)) {
@@ -295,18 +293,14 @@ sub httpd_status_codes {
         print "graph_args --base 1000\n";
         print "graph_vlabel responses / \${graph_period}\n";
         print "graph_category couchdb\n";
-        print "http$http_codes[0].label HTTP " . uc($http_codes[0]) . "\n";
-        print "http$http_codes[0].type DERIVE\n";
-        print "http$http_codes[0].min 0\n";
-        print "http$http_codes[0].draw AREA\n";
-        foreach (@http_codes[1..scalar(@http_codes) - 1]) {
+        foreach (@http_codes) {
             my $desc = $json->{'httpd_status_codes'}->{$_}->{'description'};
             $desc =~ s/^number of //;
             $desc =~ s/ responses$//;
             print "http$_.label $desc\n";
             print "http$_.type DERIVE\n";
             print "http$_.min 0\n";
-            print "http$_.draw STACK\n";
+            print "http$_.draw AREASTACK\n";
         }
     } elsif (defined($json)) {
         foreach (@http_codes) {
