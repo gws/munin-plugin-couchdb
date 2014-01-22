@@ -19,7 +19,7 @@ Munin monitoring plugin for Apache CouchDB.
 Example of the default configuration:
 
     [couchdb]
-    env.uri    http://localhost:5984/_stats
+    env.uri    http://localhost:5984
 
 =head2 Environment variables
 
@@ -27,8 +27,7 @@ Example of the default configuration:
 
 =item *
 
-B<uri>: Set the URI for access to the _stats endpoint for the target CouchDB
-instance. This defaults to B<http://localhost:5984/_stats>.
+B<uri>: CouchDB instance URL. Default is B<http://localhost:5984>.
 
 =back
 
@@ -50,7 +49,7 @@ Extend plugin to handle more stats. Various useful tweaks.
 
 =item Alexander Shorin <kxepal@gmail.com>
 
-Multigraph version.
+Multigraph version and various improvements.
 
 =back
 
@@ -87,14 +86,24 @@ if (!eval("require JSON;")) {
     $err = "JSON not found";
 }
 
-my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984/_stats";
+my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984";
+$URI = $1 if($URI=~/(.*)\/$/);
+
+
+
+sub do_request {
+    my $path = shift || '/_stats';
+    my $url = "$URI$path";
+    return LWP::UserAgent->new(timeout => 5)
+                         ->request(HTTP::Request->new('GET', $url));
+
+}
 
 
 
 sub main {
     my $mode = shift || 'stats';
-    my $response = LWP::UserAgent->new(timeout => 5)
-                                 ->request(HTTP::Request->new('GET', $URI));
+    my $response = do_request('/_stats');
     my $json = undef;
 
     if ($response->is_success) {
@@ -386,9 +395,7 @@ sub request_times {
     } else {
         my @times = (60, 300, 900);
         foreach(@times) {
-            my $ranged_uri = "$URI/couchdb/request_time?range=$_";
-            my $response = LWP::UserAgent->new(timeout => 5)
-                                         ->request(HTTP::Request->new('GET', $ranged_uri));
+            my $response = do_request("/_stats/couchdb/request_time?range=$_");
             if ($response->is_success) {
                 my $json = JSON::decode_json($response->content);
                 my $stdev = $json->{'couchdb'}
