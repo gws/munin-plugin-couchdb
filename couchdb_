@@ -29,6 +29,14 @@ Example of the default configuration:
 
 B<uri>: CouchDB instance URL. Default is B<http://localhost:5984>.
 
+=item *
+
+B<username>: CouchDB user name.
+
+=item *
+
+B<password>: CouchDB user's password.
+
 =back
 
 =head1 USAGE
@@ -71,6 +79,7 @@ git-master
 use strict;
 use warnings;
 use Munin::Plugin;
+require MIME::Base64;
 
 need_multigraph();
 
@@ -88,6 +97,16 @@ if (!eval("require JSON;")) {
 my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984";
 $URI = $1 if($URI=~/(.*)\/$/);
 
+my $USERNAME = exists($ENV{'username'}) ? $ENV{'username'} : undef;
+my $PASSWORD = exists($ENV{'password'}) ? $ENV{'password'} : undef;
+
+
+
+sub auth_header {
+    my( $user, $pass) = @_;
+    return "Basic " . MIME::Base64::encode("$user:$pass", "");
+}
+
 
 sub get_json {
     my $response = shift @_;
@@ -102,9 +121,12 @@ sub get_json {
 sub do_request {
     my $path = shift;
     my $url = "$URI$path";
-
-    return LWP::UserAgent->new(timeout => 5)
-                         ->request(HTTP::Request->new('GET', $url));
+    my $client = LWP::UserAgent->new(timeout => 5);
+    if (defined($USERNAME) && defined($PASSWORD)){
+        $client->default_header(
+            'Authorization' => auth_header($USERNAME, $PASSWORD));
+    }
+    return $client->request(HTTP::Request->new('GET', $url));
 }
 
 
