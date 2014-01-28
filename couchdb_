@@ -152,7 +152,7 @@ sub clients_requesting_changes {
     print "multigraph couchdb_clients_requesting_changes\n";
     if ($mode eq 'config') {
         print "graph_title CouchDB clients for continuous changes feeds\n";
-        print "graph_args --base 1000 -l 0\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
         print "graph_vlabel clients\n";
         print "graph_category couchdb\n";
         print "graph_scale no\n";
@@ -184,7 +184,7 @@ sub database_io {
     print "multigraph couchdb_database_io\n";
     if ($mode eq 'config'){
         print "graph_title CouchDB database I/O statistics\n";
-        print "graph_args --base 1000\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
         print "graph_vlabel IO / \${graph_period} reads (-) / writes (+) \n";
         print "graph_category couchdb\n";
         print "reads.label reads\n";
@@ -217,7 +217,7 @@ sub httpd_request_methods {
     print "multigraph couchdb_httpd_request_methods\n";
     if ($mode eq 'config') {
         print "graph_title CouchDB httpd request methods\n";
-        print "graph_args --base 1000\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
         print "graph_vlabel requests / \${graph_period}\n";
         print "graph_category couchdb\n";
         foreach (@http_verbs) {
@@ -258,7 +258,7 @@ sub httpd_requests {
     print "multigraph couchdb_httpd_requests\n";
     if ($mode eq 'config') {
         print "graph_title CouchDB httpd requests\n";
-        print "graph_args --base 1000\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
         print "graph_vlabel requests / \${graph_period}\n";
         print "graph_category couchdb\n";
         foreach (@request_types) {
@@ -298,7 +298,7 @@ sub httpd_status_codes {
     print "multigraph couchdb_httpd_status_codes\n";
     if ($mode eq 'config') {
         print "graph_title CouchDB httpd status codes\n";
-        print "graph_args --base 1000\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
         print "graph_vlabel responses / \${graph_period}\n";
         print "graph_category couchdb\n";
         foreach (@http_codes) {
@@ -336,6 +336,7 @@ sub open_databases {
     print "multigraph couchdb_open_databases\n";
     if ($mode eq 'config') {
         print "graph_title CouchDB open databases\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
         print "graph_vlabel open databases\n";
         print "graph_category couchdb\n";
         print "graph_scale no\n";
@@ -358,6 +359,7 @@ sub open_files {
     print "multigraph couchdb_open_files\n";
     if ($mode eq 'config') {
         print "graph_title CouchDB open files\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
         print "graph_vlabel open file descriptors\n";
         print "graph_category couchdb\n";
         print "graph_scale no\n";
@@ -422,7 +424,7 @@ sub auth_cache {
     print "multigraph couchdb_auth_cache\n";
     if ($mode eq 'config') {
         print "graph_title CouchDB authentication cache\n";
-        print "graph_args --base 1000\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
         print "graph_vlabel auth cache ratio / \${graph_period}\n";
         print "graph_category couchdb\n";
         print "graph_scale no\n";
