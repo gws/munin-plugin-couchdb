@@ -126,6 +126,13 @@ sub main {
         exit 1;
     }
 
+    do_stats($json, $mode);
+}
+
+
+
+sub do_stats {
+    my ($json, $mode) = @_;
     clients_requesting_changes($json, $mode);
     database_io($json, $mode);
     httpd_request_methods($json, $mode);
