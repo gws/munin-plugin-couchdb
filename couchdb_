@@ -75,7 +75,6 @@ use Munin::Plugin;
 need_multigraph();
 
 
-
 my $err = undef;
 
 if (!eval("require LWP::UserAgent;")) {
@@ -90,25 +89,33 @@ my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984";
 $URI = $1 if($URI=~/(.*)\/$/);
 
 
-
-sub do_request {
-    my $path = shift || '/_stats';
-    my $url = "$URI$path";
-    return LWP::UserAgent->new(timeout => 5)
-                         ->request(HTTP::Request->new('GET', $url));
-
+sub get_json {
+    my $response = shift @_;
+    my $json = undef;
+    if ($response->is_success) {
+        $json = JSON::decode_json($response->content);
+    }
+    return $json;
 }
 
+
+sub do_request {
+    my $path = shift;
+    my $url = "$URI$path";
+
+    return LWP::UserAgent->new(timeout => 5)
+                         ->request(HTTP::Request->new('GET', $url));
+}
+
+
+sub get_json_resp {
+    return get_json(do_request(@_));
+}
 
 
 sub main {
     my $mode = shift || 'stats';
     my $response = do_request('/_stats');
-    my $json = undef;
-
-    if ($response->is_success) {
-        $json = JSON::decode_json($response->content);
-    }
 
     if ($mode eq 'autoconf') {
         if (defined($err)) {
@@ -126,9 +133,8 @@ sub main {
         exit 1;
     }
 
-    do_stats($json, $mode);
+    do_stats(get_json($response), $mode);
 }
-
 
 
 sub do_stats {
@@ -143,7 +149,6 @@ sub do_stats {
     request_times($json, $mode);
     auth_cache($json, $mode);
 }
-
 
 
 sub clients_requesting_changes {
@@ -164,18 +169,15 @@ sub clients_requesting_changes {
         print "clients_requesting_changes.draw AREASTACK\n";
         print "clients_requesting_changes.label $desc\n";
         print "clients_requesting_changes.min 0\n";
-    } else {
-        if (defined($json)) {
+    } elsif (defined($json)) {
             my $value = $json->{'httpd'}
                              ->{'clients_requesting_changes'}
                              ->{'current'} || 0;
             print "clients_requesting_changes.value $value\n";
-        } else {
-            print "clients_requesting_changes.value U\n";
-        }
+    } else {
+        print "clients_requesting_changes.value U\n";
     }
 }
-
 
 
 sub database_io {
@@ -195,19 +197,18 @@ sub database_io {
         print "writes.type DERIVE\n";
         print "writes.min 0\n";
         print "writes.negative reads\n";
-    } else {
-        if (defined($json)) {
-            my $reads = $json->{'couchdb'}->{'database_reads'}->{'current'} || 0;
-            my $writes = $json->{'couchdb'}->{'database_writes'}->{'current'} || 0;
+    } elsif (defined($json)) {
+            my $reads = $json->{'couchdb'}
+                             ->{'database_reads'}->{'current'} || 0;
+            my $writes = $json->{'couchdb'}
+                              ->{'database_writes'}->{'current'} || 0;
             print "reads.value $reads\n";
             print "writes.value $writes\n";
-        } else {
-            print "reads.value U\n";
-            print "writes.value U\n";
-        }
+    } else {
+        print "reads.value U\n";
+        print "writes.value U\n";
     }
 }
-
 
 
 sub httpd_request_methods {
@@ -228,26 +229,23 @@ sub httpd_request_methods {
             print "$_.min 0\n";
             print "$_.draw AREASTACK\n";
         }
-    } else {
-        if (defined($json)) {
-            foreach (@http_verbs) {
-                if (defined($json->{'httpd_request_methods'}->{uc($_)})) {
-                    my $value = $json->{'httpd_request_methods'}
-                                     ->{uc($_)}
-                                     ->{'current'} || 0;
-                    print "$_.value $value\n";
-                } else {
-                    print "$_.value U\n";
-                }
-            }
-        } else {
-            foreach (@http_verbs) {
+    } elsif (defined($json)) {
+        foreach (@http_verbs) {
+            if (defined($json->{'httpd_request_methods'}->{uc($_)})) {
+                my $value = $json->{'httpd_request_methods'}
+                                 ->{uc($_)}
+                                 ->{'current'} || 0;
+                print "$_.value $value\n";
+            } else {
                 print "$_.value U\n";
             }
         }
+    } else {
+        foreach (@http_verbs) {
+            print "$_.value U\n";
+        }
     }
 }
-
 
 
 sub httpd_requests {
@@ -268,24 +266,21 @@ sub httpd_requests {
             print "$_.type DERIVE\n";
             print "$_.min 0\n";
         }
-    } else {
-        if (defined($json)) {
-            foreach (@request_types) {
-                if (defined($json->{'httpd'}->{$_})) {
-                    my $value = $json->{'httpd'}->{$_}->{'current'} || 0;
-                    print "$_.value $value\n";
-                } else {
-                    print "$_.value U\n";
-                }
-            }
-        } else {
-            foreach (@request_types) {
+    } elsif (defined($json)) {
+        foreach (@request_types) {
+            if (defined($json->{'httpd'}->{$_})) {
+                my $value = $json->{'httpd'}->{$_}->{'current'} || 0;
+                print "$_.value $value\n";
+            } else {
                 print "$_.value U\n";
             }
         }
+    } else {
+        foreach (@request_types) {
+            print "$_.value U\n";
+        }
     }
 }
-
 
 
 sub httpd_status_codes {
@@ -329,7 +324,6 @@ sub httpd_status_codes {
 }
 
 
-
 sub open_databases {
     my ($json, $mode) = @_;
 
@@ -352,7 +346,6 @@ sub open_databases {
 }
 
 
-
 sub open_files {
     my ($json, $mode) = @_;
 
@@ -373,7 +366,6 @@ sub open_files {
         print "files.value U\n";
     }
 }
-
 
 
 sub request_times {
@@ -399,9 +391,8 @@ sub request_times {
     } else {
         my @times = (60, 300, 900);
         foreach(@times) {
-            my $response = do_request("/_stats/couchdb/request_time?range=$_");
-            if ($response->is_success) {
-                my $json = JSON::decode_json($response->content);
+            my $json = get_json_resp("/_stats/couchdb/request_time?range=$_");
+            if (defined($json)) {
                 my $stdev = $json->{'couchdb'}
                                  ->{'request_time'}
                                  ->{'stddev'} || 0;
@@ -415,7 +406,6 @@ sub request_times {
         }
     }
 }
-
 
 
 sub auth_cache {
@@ -437,8 +427,10 @@ sub auth_cache {
         print "misses.type DERIVE\n";
         print "misses.min 0\n";
     } elsif (defined($json)) {
-        my $hits = $json->{'couchdb'}->{'auth_cache_hits'}->{'current'} || 0;
-        my $misses = $json->{'couchdb'}->{'auth_cache_misses'}->{'current'} || 0;
+        my $hits = $json->{'couchdb'}
+                        ->{'auth_cache_hits'}->{'current'} || 0;
+        my $misses = $json->{'couchdb'}
+                          ->{'auth_cache_misses'}->{'current'} || 0;
         print "hits.value $hits\n";
         print "misses.value $misses\n";
     } else {
