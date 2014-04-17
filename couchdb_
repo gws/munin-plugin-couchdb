@@ -119,7 +119,7 @@ $MONITOR_ACTIVE_TASKS = ($MONITOR_ACTIVE_TASKS =~ m/^(true|yes)$/) ? 1 : 0;
 
 
 sub auth_header {
-    my( $user, $pass) = @_;
+    my ($user, $pass) = @_;
     return "Basic " . MIME::Base64::encode("$user:$pass", "");
 }
 
