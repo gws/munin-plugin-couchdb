@@ -149,7 +149,7 @@ inactivity CouchDB eventually closes it providing more space in the room for
 others, but sometimes such cleanup may not help. This graph's goal is to help
 you setup correct `max_dbs_open` value that'll fit your needs.
 
-*Note:* Handling `max_dbs_open` configuration value and setting it as critical
+*Notice:* Handling `max_dbs_open` configuration value and setting it as critical
 mark isn't implemented yet.
 
 
@@ -158,13 +158,13 @@ mark isn't implemented yet.
 The `couchdb_open_files` graph shows amount of currently opened file
 descriptors.
 
-*Note:* Handling system `nofile` limit isn't implemented yet and couldn't be
+*Notice:* Handling system `nofile` limit isn't implemented yet and couldn't be
 possible for remote instances.
 
 
 #### Active Tasks ####
 
-**Notice:** this graph is *disabled* by default. To enable it you should:
+**Warning:** this graph is *disabled* by default. To enable it you should:
 
 1. Set `env.monitor_active_tasks yes` in plugin's configuration file
 2. Ensure that `env.username` and `env.password` are represents credentials
