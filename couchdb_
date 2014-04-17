@@ -47,6 +47,26 @@ Possible values: yes, no, true, false.
 
 Disabled by default.
 
+=item *
+
+B<max_dbs_open_warn>: Rate from max_dbs_open configuration value when to
+raise the warning.
+
+Available only when CouchDB server adminitrator's credentials are provided
+(need to query B</_config> for B<max_dbs_open> value)
+
+Default is 90.
+
+=item *
+
+B<max_dbs_open_crit>: Rate from max_dbs_open configuration value when to
+raise the critical alert.
+
+Available only when CouchDB server adminitrator's credentials are provided
+(need to query /_config resource for max_dbs_open value).
+
+Default is 98.
+
 =back
 
 =head1 USAGE
@@ -109,13 +129,14 @@ $URI = $1 if($URI=~/(.*)\/$/);
 
 my $USERNAME = exists($ENV{'username'}) ? $ENV{'username'} : undef;
 my $PASSWORD = exists($ENV{'password'}) ? $ENV{'password'} : undef;
+
 my $MONITOR_ACTIVE_TASKS = exists($ENV{'monitor_active_tasks'})
                            ? $ENV{'monitor_active_tasks'}
                            : 'no';
-
 # Actually, we don't test for false/no since only explicit permission matters
 $MONITOR_ACTIVE_TASKS = ($MONITOR_ACTIVE_TASKS =~ m/^(true|yes)$/) ? 1 : 0;
 
+my $CONFIG = get_json_resp('/_config');
 
 
 sub auth_header {
@@ -384,6 +405,31 @@ sub open_databases {
         print "graph_printf %.0lf\n";
         print "dbs.draw AREASTACK\n";
         print "dbs.label open databases\n";
+        if (defined($CONFIG)) {
+            my $max_dbs_open = $CONFIG->{'couchdb'}->{'max_dbs_open'};
+
+            my $warn_rate = 0;
+            my $crit_rate = 0;
+            if (exists($ENV{'max_dbs_open_warn'})) {
+                $crit_rate = int($ENV{'max_dbs_open_warn'});
+            }
+            if (exists($ENV{'max_dbs_open_crit'})) {
+                $crit_rate = int($ENV{'max_dbs_open_crit'});
+            }
+            $warn_rate ||= 90;
+            $crit_rate ||= 98;
+
+            my $max_dbs_open_warn = int($max_dbs_open * $warn_rate / 100);
+            my $max_dbs_open_crit = int($max_dbs_open * $crit_rate / 100);
+
+            # For small max_dbs_open value warn and crit may be equal
+            if ($max_dbs_open_warn == $max_dbs_open_crit) {
+                $max_dbs_open_warn -= 1;
+            }
+
+            print "dbs.warning $max_dbs_open_warn\n";
+            print "dbs.critical $max_dbs_open_crit\n";
+        }
     } elsif (defined($json)) {
         my $value = $json->{'couchdb'}->{'open_databases'}->{'current'} || 0;
         print "dbs.value $value\n";

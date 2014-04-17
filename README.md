@@ -152,8 +152,9 @@ inactivity CouchDB eventually closes it providing more space in the room for
 others, but sometimes such cleanup may not help. This graph's goal is to help
 you setup correct `max_dbs_open` value that'll fit your needs.
 
-*Notice:* Handling `max_dbs_open` configuration value and setting it as critical
-mark isn't implemented yet.
+*Notice:* If server administrator's credentials provided (need to request
+[/_config][16] resource) the `max_dbs_open` configuration value will be used to
+set proper `warning` and `critical` levels.
 
 
 #### Open Files ####
@@ -208,3 +209,4 @@ give you the answer is this activity is related to CouchDB and how if it is.
 [13]: http://docs.couchdb.org/en/latest/api/server/common.html#stats
 [14]: http://docs.couchdb.org/en/latest/config/auth.html#couch_httpd_auth/require_valid_user
 [15]: http://docs.couchdb.org/en/latest/api/server/common.html#active-tasks
+[16]: http://docs.couchdb.org/en/latest/api/server/configuration.html#get--_config
