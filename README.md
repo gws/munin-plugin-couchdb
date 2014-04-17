@@ -32,6 +32,9 @@ administrator's credentials.
 Leaving such credentials in plain text within config file is **dangerous**, so
 make sure that plugin's configuration file is readable only for trusted users.
 
+If you're going to monitor remote server (not on localhost) make sure that
+you're using secure connection with it (HTTPS or SSH-tunnel) to not transfer
+credentials in plain text over the network.
 
 ## Monitoring ##
 
