@@ -37,6 +37,16 @@ B<username>: CouchDB user name.
 
 B<password>: CouchDB user's password.
 
+=item *
+
+B<monitor_active_tasks>: Allows to monitor /_active_tasks resource.
+This resource is only accepts requests from CouchDB server administrators,
+so make sure that credentials are set correctly for it.
+
+Possible values: yes, no, true, false.
+
+Disabled by default.
+
 =back
 
 =head1 USAGE
@@ -99,6 +109,12 @@ $URI = $1 if($URI=~/(.*)\/$/);
 
 my $USERNAME = exists($ENV{'username'}) ? $ENV{'username'} : undef;
 my $PASSWORD = exists($ENV{'password'}) ? $ENV{'password'} : undef;
+my $MONITOR_ACTIVE_TASKS = exists($ENV{'monitor_active_tasks'})
+                           ? $ENV{'monitor_active_tasks'}
+                           : 'no';
+
+# Actually, we don't test for false/no since only explicit permission matters
+$MONITOR_ACTIVE_TASKS = ($MONITOR_ACTIVE_TASKS =~ m/^(true|yes)$/) ? 1 : 0;
 
 
 
@@ -156,7 +172,9 @@ sub main {
     }
 
     do_stats(get_json($response), $mode);
-    do_active_tasks($mode);
+    if ($MONITOR_ACTIVE_TASKS) {
+        do_active_tasks($mode);
+    }
 }
 
 

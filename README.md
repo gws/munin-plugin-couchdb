@@ -21,6 +21,18 @@ For additional information about plugins installation consult with
 [Munin docs][6].
 
 
+### Setting Auth Credentials ###
+
+The `munin-plugin-couchdb` is able to gather statistics not only
+from [/_stats][13] resource (which doesn't requires any authentication by
+default unless [require_valid_user][14] is setted on) but alsofrom other
+resources like [/_active_tasks][15] which requires to provide CouchDB server
+administrator's credentials.
+
+Leaving such credentials in plain text within config file is **dangerous**, so
+make sure that plugin's configuration file is readable only for trusted users.
+
+
 ## Monitoring ##
 
 
@@ -150,6 +162,28 @@ descriptors.
 possible for remote instances.
 
 
+#### Active Tasks ####
+
+**Notice:** this graph is *disabled* by default. To enable it you should:
+
+1. Set `env.monitor_active_tasks yes` in plugin's configuration file
+2. Ensure that `env.username` and `env.password` are represents credentials
+   for CouchDB server administrator user
+3. Ensure that plugin's configuration file is readable for noone, but munin
+
+The `couchdb_active_tasks` graph shows current processes runned on CouchDB like:
+
+- Active replications, served by this CouchDB instance
+- View index builds
+- Database and views compactions
+
+This information is very valuable since some of these operations are very IO
+heavy (compactions are so). For instance, you're looking on `diskstats_iops`
+graph and see high write activity, but for most cases you could say for sure
+who generates it. Combining these graphs together for the same period may
+give you the answer is this activity is related to CouchDB and how if it is.
+
+
 ## License ##
 
 [Beerware](https://tldrlegal.com/license/beerware-license)
@@ -168,3 +202,6 @@ possible for remote instances.
 [10]: http://docs.couchdb.org/en/latest/api/database/temp-views.html#post--db-_temp_view
 [11]: http://docs.couchdb.org/en/latest/config/auth.html#couch_httpd_auth/auth_cache_size
 [12]: http://docs.couchdb.org/en/latest/config/couchdb.html#couchdb/max_dbs_open
+[13]: http://docs.couchdb.org/en/latest/api/server/common.html#stats
+[14]: http://docs.couchdb.org/en/latest/config/auth.html#couch_httpd_auth/require_valid_user
+[15]: http://docs.couchdb.org/en/latest/api/server/common.html#active-tasks
