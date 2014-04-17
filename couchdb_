@@ -290,8 +290,6 @@ sub httpd_request_methods {
         print "graph_vlabel requests / \${graph_period}\n";
         print "graph_category couchdb\n";
         foreach (@http_verbs) {
-            my $desc = $json->{'httpd_request_methods'}->{$_}->{'description'};
-            $desc =~ s/^number of //;
             print "$_.label HTTP " . uc($_) . "\n";
             print "$_.type DERIVE\n";
             print "$_.min 0\n";
