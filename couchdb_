@@ -471,7 +471,7 @@ sub request_times {
             print "stddev$_.label stddev$_\n";
             print "stddev$_.graph no\n";
             print "mean$_.label stddev/mean ($sample min)\n";
-            print "mean$_.draw AREASTACK\n";
+            print "mean$_.draw AREA\n";
             print "mean$_.negative stddev$_\n";
         }
     } else {
