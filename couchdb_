@@ -351,10 +351,7 @@ sub httpd_requests {
 
 sub httpd_status_codes {
     my ($json, $mode) = @_;
-    my @http_codes = ('200', '201', '202',
-                      '301', '304',
-                      '400', '401', '404', '405', '409', '412',
-                      '500');
+    my @http_codes = sort keys %{$json->{'httpd_status_codes'}};
 
     print "multigraph couchdb_httpd_status_codes\n";
     if ($mode eq 'config') {
@@ -373,14 +370,10 @@ sub httpd_status_codes {
         }
     } elsif (defined($json)) {
         foreach (@http_codes) {
-            if (defined($json->{'httpd_status_codes'}->{uc($_)})) {
-                my $value = $json->{'httpd_status_codes'}
-                                 ->{uc($_)}
-                                 ->{'current'} || 0;
-                print "http$_.value $value\n";
-            } else {
-                print "http$_.value U\n";
-            }
+            my $value = $json->{'httpd_status_codes'}
+                             ->{uc($_)}
+                             ->{'current'} || 0;
+            print "http$_.value $value\n";
         }
     } else {
         foreach (@http_codes) {
