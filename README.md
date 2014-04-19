@@ -44,6 +44,13 @@ credentials in plain text over the network.
 These metrics are related to [Mochiweb](https://github.com/mochi/mochiweb) -
 the CouchDB's HTTP server which runs the API and communicates with the world.
 
+This plugin also gathers all metrics from CouchDB via HTTP API, so it causes
+so overhead: one request to fetch `max_dbs_open` from [/_config][16] resource,
+one request to fetch all stats from [/_stats][13], 3 more requests (by default)
+for `couchdb_request_times` graph per each sample and optional request to
+[/_active_tasks][15] if allowed. In total 5-6 requests per stats update.
+
+
 #### Request Methods ####
 
 The `couchdb_httpd_request_methods` graph provides information about all HTTP
