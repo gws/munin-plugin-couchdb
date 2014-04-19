@@ -120,7 +120,7 @@ The `couchdb_auth_cache` graph shows rate of authentication cache hits/misses.
 CouchDB keeps some amount of user credentials in memory to speedup
 authentication process by elimination of additional database lookups.
 This cache size is limited by the configuration option [auth_cache_size][11].
-On what this affects? In short, when user logins CouchDB first looks for user
+On what this affects? In short, when user login CouchDB first looks for user
 credentials what associated with provided login name in auth cache and if they
 miss there then it reads credentials from auth database (in other words,
 from disk).
@@ -189,9 +189,9 @@ possible for remote instances.
 1. Set `env.monitor_active_tasks yes` in plugin's configuration file
 2. Ensure that `env.username` and `env.password` are represents credentials
    for CouchDB server administrator user
-3. Ensure that plugin's configuration file is readable for noone, but munin
+3. Ensure that plugin's configuration file is readable for no one, but Munin
 
-The `couchdb_active_tasks` graph shows current processes runned on CouchDB like:
+The `couchdb_active_tasks` graph shows current processes that runs on CouchDB:
 
 - Active replications, served by this CouchDB instance
 - View index builds

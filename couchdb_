@@ -52,7 +52,7 @@ Disabled by default.
 B<max_dbs_open_warn>: Rate from max_dbs_open configuration value when to
 raise the warning.
 
-Available only when CouchDB server adminitrator's credentials are provided
+Available only when CouchDB server administrator's credentials are provided
 (need to query B</_config> for B<max_dbs_open> value)
 
 Default is 90.
@@ -62,7 +62,7 @@ Default is 90.
 B<max_dbs_open_crit>: Rate from max_dbs_open configuration value when to
 raise the critical alert.
 
-Available only when CouchDB server adminitrator's credentials are provided
+Available only when CouchDB server administrator's credentials are provided
 (need to query /_config resource for max_dbs_open value).
 
 Default is 98.
