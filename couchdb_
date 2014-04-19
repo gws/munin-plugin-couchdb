@@ -461,27 +461,28 @@ sub open_files {
 
 sub request_times {
     my ($json, $mode) = @_;
+    my $samples = defined($CONFIG)
+                  ? JSON::decode_json($CONFIG->{'stats'}->{'samples'})
+                  : [60, 300, 900];
 
     print "multigraph couchdb_request_times\n";
     if ($mode eq 'config') {
         print "graph_title CouchDB request times\n";
-        print "graph_vlabel request times (in ms)\n";
+        print "graph_vlabel request time stddev (+) / mean (-) in ms\n";
         print "graph_category couchdb\n";
-        print "stddev60.label stddev60\n";
-        print "stddev60.graph no\n";
-        print "mean60.label stddev/mean (1 minute)\n";
-        print "mean60.negative stddev60\n";
-        print "stddev300.label stddev300\n";
-        print "stddev300.graph no\n";
-        print "mean300.label stddev/mean (5 minutes)\n";
-        print "mean300.negative stddev300\n";
-        print "stddev900.label stddev900\n";
-        print "stddev900.graph no\n";
-        print "mean900.label stddev/mean (15 minutes)\n";
-        print "mean900.negative stddev900\n";
+        foreach(@$samples){
+            if (!$_) {next}
+            my $sample = ($_ % 60 == 0)
+                         ? int($_ / 60)
+                         : sprintf("%.1f", $_ / 60);
+            print "stddev$_.label stddev$_\n";
+            print "stddev$_.graph no\n";
+            print "mean$_.label stddev/mean ($sample min)\n";
+            print "mean$_.draw AREASTACK\n";
+            print "mean$_.negative stddev$_\n";
+        }
     } else {
-        my @times = (60, 300, 900);
-        foreach(@times) {
+        foreach(@$samples){
             my $json = get_json_resp("/_stats/couchdb/request_time?range=$_");
             if (defined($json)) {
                 my $stdev = $json->{'couchdb'}

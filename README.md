@@ -25,7 +25,7 @@ For additional information about plugins installation consult with
 
 The `munin-plugin-couchdb` is able to gather statistics not only
 from [/_stats][13] resource (which doesn't requires any authentication by
-default unless [require_valid_user][14] is setted on) but alsofrom other
+default unless [require_valid_user][14] is set on) but also from other
 resources like [/_active_tasks][15] which requires to provide CouchDB server
 administrator's credentials.
 
@@ -44,7 +44,6 @@ credentials in plain text over the network.
 These metrics are related to [Mochiweb](https://github.com/mochi/mochiweb) -
 the CouchDB's HTTP server which runs the API and communicates with the world.
 
-
 #### Request Methods ####
 
 The `couchdb_httpd_request_methods` graph provides information about all HTTP
@@ -56,6 +55,16 @@ requests in context of used method. It counts the next methods:
 - `PUT`
 - `DELETE`
 - `COPY`
+
+#### Requests Time ####
+
+The `couchdb_request_times` graph shows stddev/mean of HTTP request time within
+each [sampling range][17].
+
+In CouchDB configuration information isn't available, the default samples
+(`[60, 300, 900]`) will be used. Note, that in this case for each sample that
+doesn't match value defined in [stats/samples][17] option this graph will
+print zeros.
 
 
 #### Requests by Type ####
@@ -210,3 +219,4 @@ give you the answer is this activity is related to CouchDB and how if it is.
 [14]: http://docs.couchdb.org/en/latest/config/auth.html#couch_httpd_auth/require_valid_user
 [15]: http://docs.couchdb.org/en/latest/api/server/common.html#active-tasks
 [16]: http://docs.couchdb.org/en/latest/api/server/configuration.html#get--_config
+[17]: http://docs.couchdb.org/en/latest/config/misc.html#stats/samples
