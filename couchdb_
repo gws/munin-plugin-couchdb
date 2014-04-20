@@ -1,0 +1,566 @@
+#!/usr/bin/env perl
+
+=head1 NAME
+
+Munin monitoring plugin for Apache CouchDB.
+
+=head1 APPLICABLE SYSTEMS
+
+=over 4
+
+=item Apache CouchDB server with statistics enabled.
+
+=item Perl with LWP::UserAgent and JSON modules.
+
+=back
+
+=head1 CONFIGURATION
+
+Example of the default configuration:
+
+    [couchdb]
+    env.uri    http://localhost:5984
+
+=head2 Environment variables
+
+=over
+
+=item *
+
+B<uri>: CouchDB instance URL. Default is B<http://localhost:5984>.
+
+=item *
+
+B<username>: CouchDB user name.
+
+=item *
+
+B<password>: CouchDB user's password.
+
+=item *
+
+B<monitor_active_tasks>: Allows to monitor /_active_tasks resource.
+This resource is only accepts requests from CouchDB server administrators,
+so make sure that credentials are set correctly for it.
+
+Possible values: yes, no, true, false.
+
+Disabled by default.
+
+=item *
+
+B<max_dbs_open_warn>: Rate from max_dbs_open configuration value when to
+raise the warning.
+
+Available only when CouchDB server administrator's credentials are provided
+(need to query B</_config> for B<max_dbs_open> value)
+
+Default is 90.
+
+=item *
+
+B<max_dbs_open_crit>: Rate from max_dbs_open configuration value when to
+raise the critical alert.
+
+Available only when CouchDB server administrator's credentials are provided
+(need to query /_config resource for max_dbs_open value).
+
+Default is 98.
+
+=back
+
+=head1 USAGE
+
+Link this plugin to /etc/munin/plugins/ and restart the munin-node.
+
+=head1 AUTHORS
+
+=over 4
+
+=item Gordon Stratton <gordon.stratton@gmail.com>
+
+Original author.
+
+=item Nicholas A. Evans <nevans@410labs.com>
+
+Extend plugin to handle more stats. Various useful tweaks.
+
+=item Alexander Shorin <kxepal@gmail.com>
+
+Multigraph version and various improvements.
+
+=back
+
+=head1 LICENSE
+
+Beerware
+
+=head1 VERSION
+
+0.6-git-master
+
+=head1 MAGICK MARKERS
+
+  #%# family=auto
+  #%# capabilities=autoconf
+
+=cut
+
+use strict;
+use warnings;
+use Munin::Plugin;
+require MIME::Base64;
+
+need_multigraph();
+
+
+my $err = undef;
+
+if (!eval("require LWP::UserAgent;")) {
+    $err = "LWP::UserAgent not found";
+}
+
+if (!eval("require JSON;")) {
+    $err = "JSON not found";
+}
+
+my $URI = exists($ENV{'uri'}) ? $ENV{'uri'} : "http://localhost:5984";
+$URI = $1 if($URI=~/(.*)\/$/);
+
+my $USERNAME = exists($ENV{'username'}) ? $ENV{'username'} : undef;
+my $PASSWORD = exists($ENV{'password'}) ? $ENV{'password'} : undef;
+
+my $MONITOR_ACTIVE_TASKS = exists($ENV{'monitor_active_tasks'})
+                           ? $ENV{'monitor_active_tasks'}
+                           : 'no';
+# Actually, we don't test for false/no since only explicit permission matters
+$MONITOR_ACTIVE_TASKS = ($MONITOR_ACTIVE_TASKS =~ m/^(true|yes)$/) ? 1 : 0;
+
+my $CONFIG = get_json_resp('/_config');
+
+
+sub auth_header {
+    my ($user, $pass) = @_;
+    return "Basic " . MIME::Base64::encode("$user:$pass", "");
+}
+
+
+sub get_json {
+    my $response = shift @_;
+    my $json = undef;
+    if ($response->is_success) {
+        $json = JSON::decode_json($response->content);
+    }
+    return $json;
+}
+
+
+sub do_request {
+    my $path = shift;
+    my $url = "$URI$path";
+    my $client = LWP::UserAgent->new(timeout => 5);
+    if (defined($USERNAME) && defined($PASSWORD)){
+        $client->default_header(
+            'Authorization' => auth_header($USERNAME, $PASSWORD));
+    }
+    return $client->request(HTTP::Request->new('GET', $url));
+}
+
+
+sub get_json_resp {
+    return get_json(do_request(@_));
+}
+
+
+sub main {
+    my $mode = shift || 'stats';
+    my $response = do_request('/_stats');
+
+    if ($mode eq 'autoconf') {
+        if (defined($err)) {
+            print "no ($err)\n";
+            exit 1;
+        } elsif ($response->is_success) {
+            print "yes\n";
+            exit 0;
+        } else {
+            print "no\n";
+            exit 1;
+        }
+    } elsif (($mode eq 'config') && (!$response->is_success)) {
+        print "Unable to fetch stats from $URI\n";
+        exit 1;
+    }
+
+    do_stats(get_json($response), $mode);
+    if ($MONITOR_ACTIVE_TASKS) {
+        do_active_tasks($mode);
+    }
+}
+
+
+sub do_stats {
+    my ($json, $mode) = @_;
+    clients_requesting_changes($json, $mode);
+    database_io($json, $mode);
+    httpd_request_methods($json, $mode);
+    httpd_requests($json, $mode);
+    httpd_status_codes($json, $mode);
+    open_databases($json, $mode);
+    open_files($json, $mode);
+    request_times($json, $mode);
+    auth_cache($json, $mode);
+}
+
+
+sub do_active_tasks {
+    my $mode = shift;
+    active_tasks(get_json_resp('/_active_tasks'), $mode);
+}
+
+
+sub clients_requesting_changes {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_clients_requesting_changes\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB clients for continuous changes feeds\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_vlabel clients\n";
+        print "graph_category couchdb\n";
+        print "graph_scale no\n";
+        print "graph_printf %.0lf\n";
+        my $desc = $json->{'httpd'}
+                        ->{'clients_requesting_changes'}
+                        ->{'description'};
+        $desc =~ s/^number of //;
+        print "clients_requesting_changes.draw AREASTACK\n";
+        print "clients_requesting_changes.label $desc\n";
+        print "clients_requesting_changes.min 0\n";
+    } elsif (defined($json)) {
+            my $value = $json->{'httpd'}
+                             ->{'clients_requesting_changes'}
+                             ->{'current'} || 0;
+            print "clients_requesting_changes.value $value\n";
+    } else {
+        print "clients_requesting_changes.value U\n";
+    }
+}
+
+
+sub database_io {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_database_io\n";
+    if ($mode eq 'config'){
+        print "graph_title CouchDB database I/O statistics\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_vlabel IO / \${graph_period} reads (-) / writes (+) \n";
+        print "graph_category couchdb\n";
+        print "reads.label reads\n";
+        print "reads.graph no\n";
+        print "reads.type DERIVE\n";
+        print "reads.min 0\n";
+        print "writes.label reads/writes\n";
+        print "writes.type DERIVE\n";
+        print "writes.min 0\n";
+        print "writes.negative reads\n";
+    } elsif (defined($json)) {
+            my $reads = $json->{'couchdb'}
+                             ->{'database_reads'}->{'current'} || 0;
+            my $writes = $json->{'couchdb'}
+                              ->{'database_writes'}->{'current'} || 0;
+            print "reads.value $reads\n";
+            print "writes.value $writes\n";
+    } else {
+        print "reads.value U\n";
+        print "writes.value U\n";
+    }
+}
+
+
+sub httpd_request_methods {
+    my ($json, $mode) = @_;
+    my @http_verbs = ('get', 'put', 'post', 'delete', 'copy', 'head');
+
+    print "multigraph couchdb_httpd_request_methods\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB httpd request methods\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_vlabel requests / \${graph_period}\n";
+        print "graph_category couchdb\n";
+        foreach (@http_verbs) {
+            print "$_.label HTTP " . uc($_) . "\n";
+            print "$_.type DERIVE\n";
+            print "$_.min 0\n";
+            print "$_.draw AREASTACK\n";
+        }
+    } elsif (defined($json)) {
+        foreach (@http_verbs) {
+            if (defined($json->{'httpd_request_methods'}->{uc($_)})) {
+                my $value = $json->{'httpd_request_methods'}
+                                 ->{uc($_)}
+                                 ->{'current'} || 0;
+                print "$_.value $value\n";
+            } else {
+                print "$_.value U\n";
+            }
+        }
+    } else {
+        foreach (@http_verbs) {
+            print "$_.value U\n";
+        }
+    }
+}
+
+
+sub httpd_requests {
+    my ($json, $mode) = @_;
+    my @request_types = ('requests', 'bulk_requests',
+                         'view_reads', 'temporary_view_reads');
+
+    print "multigraph couchdb_httpd_requests\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB httpd requests\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_vlabel requests / \${graph_period}\n";
+        print "graph_category couchdb\n";
+        foreach (@request_types) {
+            my $desc = $json->{'httpd'}->{$_}->{'description'};
+            $desc =~ s/^number of //;
+            print "$_.label $desc\n";
+            print "$_.type DERIVE\n";
+            print "$_.min 0\n";
+        }
+    } elsif (defined($json)) {
+        foreach (@request_types) {
+            if (defined($json->{'httpd'}->{$_})) {
+                my $value = $json->{'httpd'}->{$_}->{'current'} || 0;
+                print "$_.value $value\n";
+            } else {
+                print "$_.value U\n";
+            }
+        }
+    } else {
+        foreach (@request_types) {
+            print "$_.value U\n";
+        }
+    }
+}
+
+
+sub httpd_status_codes {
+    my ($json, $mode) = @_;
+    my @http_codes = sort keys %{$json->{'httpd_status_codes'}};
+
+    print "multigraph couchdb_httpd_status_codes\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB httpd status codes\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_vlabel responses / \${graph_period}\n";
+        print "graph_category couchdb\n";
+        foreach (@http_codes) {
+            my $desc = $json->{'httpd_status_codes'}->{$_}->{'description'};
+            $desc =~ s/^number of //;
+            $desc =~ s/ responses$//;
+            print "http$_.label $desc\n";
+            print "http$_.type DERIVE\n";
+            print "http$_.min 0\n";
+            print "http$_.draw AREASTACK\n";
+        }
+    } elsif (defined($json)) {
+        foreach (@http_codes) {
+            my $value = $json->{'httpd_status_codes'}
+                             ->{uc($_)}
+                             ->{'current'} || 0;
+            print "http$_.value $value\n";
+        }
+    } else {
+        foreach (@http_codes) {
+            print "http$_.value U\n";
+        }
+    }
+}
+
+
+sub open_databases {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_open_databases\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB open databases\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_vlabel open databases\n";
+        print "graph_category couchdb\n";
+        print "graph_scale no\n";
+        print "graph_printf %.0lf\n";
+        print "dbs.draw AREASTACK\n";
+        print "dbs.label open databases\n";
+        if (defined($CONFIG)) {
+            my $max_dbs_open = $CONFIG->{'couchdb'}->{'max_dbs_open'};
+
+            my $warn_rate = 0;
+            my $crit_rate = 0;
+            if (exists($ENV{'max_dbs_open_warn'})) {
+                $crit_rate = int($ENV{'max_dbs_open_warn'});
+            }
+            if (exists($ENV{'max_dbs_open_crit'})) {
+                $crit_rate = int($ENV{'max_dbs_open_crit'});
+            }
+            $warn_rate ||= 90;
+            $crit_rate ||= 98;
+
+            my $max_dbs_open_warn = int($max_dbs_open * $warn_rate / 100);
+            my $max_dbs_open_crit = int($max_dbs_open * $crit_rate / 100);
+
+            # For small max_dbs_open value warn and crit may be equal
+            if ($max_dbs_open_warn == $max_dbs_open_crit) {
+                $max_dbs_open_warn -= 1;
+            }
+
+            print "dbs.warning $max_dbs_open_warn\n";
+            print "dbs.critical $max_dbs_open_crit\n";
+        }
+    } elsif (defined($json)) {
+        my $value = $json->{'couchdb'}->{'open_databases'}->{'current'} || 0;
+        print "dbs.value $value\n";
+    } else {
+        print "dbs.value U\n";
+    }
+}
+
+
+sub open_files {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_open_files\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB open files\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_vlabel open file descriptors\n";
+        print "graph_category couchdb\n";
+        print "graph_scale no\n";
+        print "graph_printf %.0lf\n";
+        print "files.draw AREASTACK\n";
+        print "files.label open file descriptors\n";
+    } elsif (defined($json)) {
+        my $value = $json->{'couchdb'}->{'open_os_files'}->{'current'} || 0;
+        print "files.value $value\n";
+    } else {
+        print "files.value U\n";
+    }
+}
+
+
+sub request_times {
+    my ($json, $mode) = @_;
+    my $samples = defined($CONFIG)
+                  ? JSON::decode_json($CONFIG->{'stats'}->{'samples'})
+                  : [60, 300, 900];
+
+    print "multigraph couchdb_request_times\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB request times\n";
+        print "graph_vlabel request time stddev (+) / mean (-) in ms\n";
+        print "graph_category couchdb\n";
+        foreach(@$samples){
+            if (!$_) {next}
+            my $sample = ($_ % 60 == 0)
+                         ? int($_ / 60)
+                         : sprintf("%.1f", $_ / 60);
+            print "stddev$_.label stddev$_\n";
+            print "stddev$_.graph no\n";
+            print "mean$_.label stddev/mean ($sample min)\n";
+            print "mean$_.draw AREA\n";
+            print "mean$_.negative stddev$_\n";
+        }
+    } else {
+        foreach(@$samples){
+            my $json = get_json_resp("/_stats/couchdb/request_time?range=$_");
+            if (defined($json)) {
+                my $stdev = $json->{'couchdb'}
+                                 ->{'request_time'}
+                                 ->{'stddev'} || 0;
+                my $mean = $json->{'couchdb'}->{'request_time'}->{'mean'} || 0;
+                print "stddev$_.value $stdev\n";
+                print "mean$_.value $mean\n";
+            } else {
+                print "stddev$_.value U\n";
+                print "mean$_.value U\n";
+            }
+        }
+    }
+}
+
+
+sub auth_cache {
+    my ($json, $mode) = @_;
+
+    print "multigraph couchdb_auth_cache\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB authentication cache\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_vlabel auth cache ratio / \${graph_period}\n";
+        print "graph_category couchdb\n";
+        print "graph_scale no\n";
+        print "hits.draw AREASTACK\n";
+        print "hits.label cache hits\n";
+        print "hits.type DERIVE\n";
+        print "hits.min 0\n";
+        print "misses.draw AREASTACK\n";
+        print "misses.label cache misses\n";
+        print "misses.type DERIVE\n";
+        print "misses.min 0\n";
+    } elsif (defined($json)) {
+        my $hits = $json->{'couchdb'}
+                        ->{'auth_cache_hits'}->{'current'} || 0;
+        my $misses = $json->{'couchdb'}
+                          ->{'auth_cache_misses'}->{'current'} || 0;
+        print "hits.value $hits\n";
+        print "misses.value $misses\n";
+    } else {
+        print "hits.value U\n";
+        print "misses.value U\n";
+    }
+}
+
+
+
+sub active_tasks {
+    my ($json, $mode) = @_;
+    my %tasks_stats = (
+        'database_compaction' => 0,
+        'indexer'             => 0,
+        'replication'         => 0,
+        'view_compaction'     => 0
+    );
+
+    print "multigraph couchdb_active_tasks\n";
+    if ($mode eq 'config') {
+        print "graph_title CouchDB active tasks\n";
+        print "graph_args --base 1000 --lower-limit 0\n";
+        print "graph_scale no\n";
+        print "graph_vlabel active tasks\n";
+        print "graph_category couchdb\n";
+        print "graph_printf %.0lf\n";
+        for my $key ( keys %tasks_stats ) {
+            print "$key.draw AREASTACK\n";
+            print "$key.label $key\n";
+            print "$key.min 0\n";
+        }
+    } elsif (defined($json)) {
+        for my $task (@$json) {
+            $tasks_stats{$task->{'type'}} += 1;
+        }
+        while (my ($key, $value) = each(%tasks_stats) ) {
+            print "$key.value $value\n";
+        }
+    } else {
+        while (my ($key, $value) = each(%tasks_stats) ) {
+            print "$key.value U\n";
+        }
+    }
+}
+
+
+main($ARGV[0]);
