@@ -85,7 +85,7 @@ their type:
 - `temporary view reads`: amount of requests to the [temporary view indexes][10]
 
 
-#### Clients on Continuous Changes Feed ####
+#### Continuous Changes Feeds Listeners ####
 
 While `clients_requesting_changes` metric is in the same group as
 `bulk_requests`, `temporary_view_reads` and others,
