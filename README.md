@@ -203,6 +203,25 @@ graph and see high write activity, but for most cases you could say for sure
 who generates it. Combining these graphs together for the same period may
 give you the answer is this activity is related to CouchDB and how if it is.
 
+#### Users ####
+
+**Warning:** these graphs are *disabled* by default. To enable them you should:
+
+1. Set `env.monitor_users yes` in plugin's configuration file
+2. Ensure that `env.username` and `env.password` are represents credentials
+   for CouchDB server administrator user
+3. Ensure that plugin's configuration file is readable for no one, but Munin
+
+The `couchdb_users` and `couchdb_admin_users` graphs shows total amount of known
+users by CouchDB.
+
+The `couchdb_admin_users` graph is stand alone to easily track amount of server
+administrators. In most time their number is stable and any unexpectable changes
+may be a sign for worry about server security.
+
+The `couchdb_users` graph shows users from [authentication database][18] and
+tracks `registered` and `deleted` amount of them. This helps to estimate size of
+your users database growing and decreasing in time.
 
 ## License ##
 
@@ -227,3 +246,4 @@ give you the answer is this activity is related to CouchDB and how if it is.
 [15]: http://docs.couchdb.org/en/latest/api/server/common.html#active-tasks
 [16]: http://docs.couchdb.org/en/latest/api/server/configuration.html#get--_config
 [17]: http://docs.couchdb.org/en/latest/config/misc.html#stats/samples
+[18]: http://docs.couchdb.org/en/latest/intro/security.html#authentication-database

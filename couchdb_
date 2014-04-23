@@ -49,6 +49,17 @@ Disabled by default.
 
 =item *
 
+B<monitor_users>: Allows to monitor authentication database (/_users)
+and server admins. This option requires to make requests with CouchDB
+server administrator privileges, so make sure that provided credentials
+are guarantee that (unless server isn't in Admin Party state).
+
+Possible values: yes, no, true, false.
+
+Disabled by default.
+
+=item *
+
 B<max_dbs_open_warn>: Rate from max_dbs_open configuration value when to
 raise the warning.
 
@@ -142,6 +153,7 @@ $URI = $1 if($URI=~/(.*)\/$/);
 my $USERNAME = get_env_value('username', undef);
 my $PASSWORD = get_env_value('password', undef);
 my $MONITOR_ACTIVE_TASKS = yes_no(get_env_value('monitor_active_tasks', 'no'));
+my $MONITOR_USERS = yes_no(get_env_value('monitor_users', 'no'));
 
 my $CONFIG = get_json_resp('/_config');
 
@@ -203,6 +215,9 @@ sub main {
     if ($MONITOR_ACTIVE_TASKS) {
         do_active_tasks($mode);
     }
+    if ($MONITOR_USERS) {
+        do_couchdb_users($mode);
+    }
 }
 
 
@@ -223,6 +238,16 @@ sub do_stats {
 sub do_active_tasks {
     my $mode = shift;
     active_tasks(get_json_resp('/_active_tasks'), $mode);
+}
+
+
+sub do_couchdb_users {
+    my $mode = shift;
+    my $dbname = defined($CONFIG)
+                 ? $CONFIG->{'couch_httpd_auth'}->{'authentication_db'}
+                 : '/_users';
+    couchdb_admin_users($CONFIG, $mode);
+    couchdb_users(get_json_resp("/$dbname"), $mode);
 }
 
 
@@ -556,7 +581,6 @@ EOF
 }
 
 
-
 sub active_tasks {
     my ($json, $mode) = @_;
     my %tasks_stats = (
@@ -592,6 +616,58 @@ EOF
         while (my ($key, $value) = each(%tasks_stats) ) {
             say "$key.value U";
         }
+    }
+}
+
+sub couchdb_admin_users {
+    my ($json, $mode) = @_;
+
+    say "multigraph couchdb_admin_users";
+    if ($mode eq 'config') {
+        print <<"EOF";
+graph_title CouchDB server administrators
+graph_args --base 1000 --lower-limit 0
+graph_scale no
+graph_vlabel administrators
+graph_category couchdb
+graph_printf %.0lf
+admin_users.draw AREA
+admin_users.label server administrators
+admin_users.min 0
+EOF
+    } elsif (defined($json)) {
+        my $admins_count = keys %{$json->{'admins'}};
+        say "admin_users.value $admins_count";
+    } else {
+        say "admin_users.value U";
+    }
+}
+
+sub couchdb_users {
+    my ($json, $mode) = @_;
+
+    say "multigraph couchdb_users";
+    if ($mode eq 'config') {
+        print <<"EOF";
+graph_title CouchDB users
+graph_args --base 1000 --lower-limit 0
+graph_scale no
+graph_vlabel users
+graph_category couchdb
+graph_printf %.0lf
+users.draw AREASTACK
+users.label registered
+users.min 0
+users_deleted.draw AREASTACK
+users_deleted.label deleted
+users_deleted.min 0
+EOF
+    } elsif (defined($json)) {
+        say "users.value $json->{'doc_count'}";
+        say "users_deleted.value $json->{'doc_del_count'}";
+    } else {
+        say "users.value U";
+        say "users_deleted.value U";
     }
 }
 
