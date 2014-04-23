@@ -370,6 +370,9 @@ EOF
         foreach (@request_types) {
             my $desc = $json->{'httpd'}->{$_}->{'description'};
             $desc =~ s/^number of //;
+            if ($_ eq 'requests'){
+              say "$_.draw AREA";
+            }
             say "$_.label $desc";
             say "$_.type DERIVE";
             say "$_.min 0";
