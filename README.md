@@ -113,7 +113,7 @@ shouldn't do.
 These metrics are related to whole server instance.
 
 
-### Authentication Cache ###
+#### Authentication Cache ####
 
 The `couchdb_auth_cache` graph shows rate of authentication cache hits/misses.
 
