@@ -527,7 +527,6 @@ EOF
 stddev$_.label stddev$_
 stddev$_.graph no
 mean$_.label stddev/mean ($sample min)
-mean$_.draw AREA
 mean$_.negative stddev$_
 EOF
         }
