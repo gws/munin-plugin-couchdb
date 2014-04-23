@@ -512,7 +512,7 @@ sub request_times {
     if ($mode eq 'config') {
         print <<"EOF";
 graph_title CouchDB request times
-graph_vlabel request time stddev (+) / mean (-) in ms
+graph_vlabel request time stddev (-) / mean (+) in ms
 graph_category couchdb
 EOF
         foreach(@$samples){
