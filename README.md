@@ -96,7 +96,7 @@ This graph also helps to roughly estimate amount of continuous replications
 that are running against monitored instance.
 
 
-#### Response Statuse Codes ####
+#### Response Status Codes ####
 
 The `couchdb_httpd_status_codes` graph provides information about HTTP
 responses in context of [status code][7].
