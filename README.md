@@ -186,12 +186,11 @@ possible for remote instances.
 
 #### Active Tasks ####
 
-**Warning:** this graph is *disabled* by default. To enable it you should:
+**Warning:** this graph is *disabled* by default. To enable it you should
+set `env.monitor_active_tasks yes` in plugin configuration file and also
+provide CouchDB server administrator user. See `Setting Auth Credentials`
+section above for recommendations.
 
-1. Set `env.monitor_active_tasks yes` in plugin's configuration file
-2. Ensure that `env.username` and `env.password` are represents credentials
-   for CouchDB server administrator user
-3. Ensure that plugin's configuration file is readable for no one, but Munin
 
 The `couchdb_active_tasks` graph shows current processes that runs on CouchDB:
 
@@ -208,12 +207,11 @@ give you the answer is this activity is related to CouchDB and how if it is.
 
 #### Users ####
 
-**Warning:** these graphs are *disabled* by default. To enable them you should:
+**Warning:** these graphs are *disabled* by default. To enable them you should
+set `env.monitor_users yes` in plugin configuration file and also
+provide CouchDB server administrator user. See `Setting Auth Credentials`
+section above for recommendations.
 
-1. Set `env.monitor_users yes` in plugin's configuration file
-2. Ensure that `env.username` and `env.password` are represents credentials
-   for CouchDB server administrator user
-3. Ensure that plugin's configuration file is readable for no one, but Munin
 
 The `couchdb_users` and `couchdb_admin_users` graphs shows total amount of known
 users by CouchDB.
