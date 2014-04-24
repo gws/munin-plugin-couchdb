@@ -12,7 +12,7 @@ also need to have [Munin][1] installed.
 
 The plugin installation is quite trivial operation
 
-1. `git clone https://github.com/kxepal/munin-plugin-couchdb`
+1. `git clone https://github.com/gws/munin-plugin-couchdb`
 2. `cp munin-plugin/couchdb_ /etc/munin/plugins`
 3. Read the docs via `perldoc couchdb_`
 4. Create `/etc/munin/plugin-conf.d/couchdb` and setup proper configuration
