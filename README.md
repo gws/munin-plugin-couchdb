@@ -66,8 +66,10 @@ requests in context of used method. It counts the next methods:
 - `DELETE`
 - `COPY`
 
+![Request methods](http://gws.github.io/munin-plugin-couchdb/images/request-methods.png)
 
-#### Requests Time ####
+
+#### Request Times ####
 
 The `couchdb_request_times` graph shows stddev/mean of HTTP request time within
 each [sampling range][17].
@@ -76,6 +78,8 @@ In CouchDB configuration information isn't available, the default samples
 (`[60, 300, 900]`) will be used. Note, that in this case for each sample that
 doesn't match value defined in [stats/samples][17] option this graph will
 print zeros.
+
+![Request times](http://gws.github.io/munin-plugin-couchdb/images/request-times.png)
 
 
 #### Requests by Type ####
@@ -88,6 +92,8 @@ their type:
 - `view reads`: amount of requests to the [view indexes][9]
 - `temporary view reads`: amount of requests to the [temporary view indexes][10]
 
+![Requests by type](http://gws.github.io/munin-plugin-couchdb/images/http-requests.png)
+
 
 #### Continuous Changes Feeds Listeners ####
 
@@ -98,6 +104,8 @@ the current amount of active clients to continuous changes feeds.
 
 This graph also helps to roughly estimate amount of continuous replications
 that are running against monitored instance.
+
+![Continuous changes feeds listeners](http://gws.github.io/munin-plugin-couchdb/images/continuous-changes-feeds-listeners.png)
 
 
 #### Response Status Codes ####
@@ -110,6 +118,8 @@ quality service for you users. Normally, you want to see no `500` errors at all.
 Having high amount of `401` errors could say about authentication problems
 while `403` tell you that something or someone actively doing things that he's
 shouldn't do.
+
+![Response status codes](http://gws.github.io/munin-plugin-couchdb/images/http-status-codes.png)
 
 
 ### Server Metrics ###
@@ -151,10 +161,14 @@ to compare misses counter with. Just for instance, is 10 cache misses a high
 value? What about 100 or 1000? Having cache hits rate at some point helps
 to answer on this question.
 
+![Authentication cache ratio](http://gws.github.io/munin-plugin-couchdb/images/auth-cache.png "Whoa! Someone really tries to do bad things there")
+
 
 #### Databases I/O ####
 
 The `couchdb_database_io` graph shows overall databases read/write rate.
+
+![Databases I/O](http://gws.github.io/munin-plugin-couchdb/images/database-io.png)
 
 
 #### Open Databases ####
@@ -176,6 +190,8 @@ you setup correct `max_dbs_open` value that'll fit your needs.
 [/_config][16] resource) the `max_dbs_open` configuration value will be used to
 set proper `warning` and `critical` levels.
 
+![Open databases](http://gws.github.io/munin-plugin-couchdb/images/open-databases.png)
+
 
 #### Open Files ####
 
@@ -184,6 +200,8 @@ descriptors.
 
 *Notice:* Handling system `nofile` limit isn't implemented yet and couldn't be
 possible for remote instances.
+
+![Open files](http://gws.github.io/munin-plugin-couchdb/images/open-files.png)
 
 
 #### Active Tasks ####
@@ -206,6 +224,8 @@ graph and see high write activity, but for most cases you could say for sure
 who generates it. Combining these graphs together for the same period may
 give you the answer is this activity is related to CouchDB and how if it is.
 
+![Active tasks](http://gws.github.io/munin-plugin-couchdb/images/active-tasks.png)
+
 
 #### Users ####
 
@@ -226,6 +246,8 @@ The `couchdb_users` graph shows users from [authentication database][18] and
 tracks `registered` and `deleted` amount of them. This helps to estimate size of
 your users database growing and decreasing in time.
 
+![CouchDB users](http://gws.github.io/munin-plugin-couchdb/images/users.png)
+
 
 ### Database Metrics ###
 
@@ -244,6 +266,7 @@ which would be monitored in `env.databases`. For example:
 Note, that user for provided credential should have read access to the specified
 databases to request [database information][19] from them.
 
+
 #### Documents Count ####
 
 The `couchdb_db_${dbname}_docs` graph shows amount of existed and deleted
@@ -258,6 +281,8 @@ existed ones, this may seriously affect on consumed disk space. Such "graveyard
 databases" are needed in cleanup from deleted documents (in case when it's ever
 possible) and this graph helps to detect them.
 
+![Database documents](http://gws.github.io/munin-plugin-couchdb/images/database-docs.png)
+
 
 #### Database Fragmentation ####
 
@@ -269,6 +294,8 @@ by old documents revisions, but it's hard to note when compaction is worth to
 run especially since it's heavy disk I/O operation: you probably wouldn't
 compact 1TiB database just to free 20GiB. This graph helps to find answers on
 these two questions: "when?" and "how much?".
+
+![Database disk usage](http://gws.github.io/munin-plugin-couchdb/images/database-frag.png)
 
 
 ## License ##
