@@ -1,6 +1,7 @@
 # Munin Plugin for CouchDB #
 
-This [Munin][1] plugin allows to monitor [Apache CouchDB][2] instance.
+[munin-plugin-couchdb][0] is the [Munin][1] plugin that allows to monitor
+[Apache CouchDB][2] instance.
 
 
 ## Install and Setup ##
@@ -35,6 +36,7 @@ make sure that plugin's configuration file is readable only for trusted users.
 If you're going to monitor remote server (not on localhost) make sure that
 you're using secure connection with it (HTTPS or SSH-tunnel) to not transfer
 credentials in plain text over the network.
+
 
 ## Monitoring ##
 
@@ -227,7 +229,7 @@ your users database growing and decreasing in time.
 
 ### Database Metrics ###
 
-`munin-plugin-couchdb` also allows to monitor few databases metrics that could
+[munin-plugin-couchdb][0] also allows to monitor few databases metrics that could
 be useful. To enable it you need to set `env.monitor_databases yes` variable
 in your plugin's configuration file and explicitly define list of databases
 which would be monitored in `env.databases`. For example:
@@ -274,7 +276,7 @@ these two questions: "when?" and "how much?".
 [Beerware](https://tldrlegal.com/license/beerware-license)
 
 
-
+[0]: https://github.com/gws/munin-plugin-couchdb
 [1]: http://munin-monitoring.org/
 [2]: http://couchdb.apache.org/
 [3]: http://www.perl.org/
