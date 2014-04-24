@@ -49,6 +49,15 @@ Disabled by default.
 
 =item *
 
+B<monitor_databases>: Allows to monitor status of databases, defined in
+B<env.databases> variable.
+
+Possible values: yes, no, true, false.
+
+Disabled by default.
+
+=item *
+
 B<monitor_users>: Allows to monitor authentication database (/_users)
 and server admins. This option requires to make requests with CouchDB
 server administrator privileges, so make sure that provided credentials
@@ -57,6 +66,22 @@ are guarantee that (unless server isn't in Admin Party state).
 Possible values: yes, no, true, false.
 
 Disabled by default.
+
+=item *
+
+B<databases>: List of database names that would be monitored. Specified
+database names could be delimited by any character that isn't acceptable
+to be used in the name (comma-separated is ok), no need to URI escape
+special characters. Example:
+
+    [couchdb]
+    env.uri    http://localhost:5984
+    env.username  admin
+    env.password  s3cR1t
+    env.monitor_databases  yes
+    env.databases  mailbox, db/with/slashes, data+ba$ed
+
+Default no database would be monitored.
 
 =item *
 
@@ -154,6 +179,8 @@ my $USERNAME = get_env_value('username', undef);
 my $PASSWORD = get_env_value('password', undef);
 my $MONITOR_ACTIVE_TASKS = yes_no(get_env_value('monitor_active_tasks', 'no'));
 my $MONITOR_USERS = yes_no(get_env_value('monitor_users', 'no'));
+my $MONITOR_DATABASES = yes_no(get_env_value('monitor_databases', 'no'));
+my $DATABASES = get_env_value('databases', '');
 
 my $CONFIG = get_json_resp('/_config');
 
@@ -218,6 +245,9 @@ sub main {
     if ($MONITOR_USERS) {
         do_couchdb_users($mode);
     }
+    if ($MONITOR_DATABASES) {
+        do_databases($mode);
+    }
 }
 
 
@@ -248,6 +278,16 @@ sub do_couchdb_users {
                  : '/_users';
     couchdb_admin_users($CONFIG, $mode);
     couchdb_users(get_json_resp("/$dbname"), $mode);
+}
+
+
+sub do_databases {
+    my $mode = shift;
+    while($DATABASES =~ /([a-z][a-z0-9+\/()\$_-]+)/g) {
+        my $dbinfo = get_json_resp("/$1");
+        database_documents($dbinfo, $mode);
+        database_fragmentation($dbinfo, $mode);
+    }
 }
 
 
@@ -670,6 +710,74 @@ EOF
         say "users.value U";
         say "users_deleted.value U";
     }
+}
+
+
+sub database_documents {
+    my ($json, $mode) = @_;
+    my $dbname = $json->{'db_name'};
+    my $munin_dbname = munin_graph_name_escape($dbname);
+
+    say "multigraph couchdb_db_${munin_dbname}_docs";
+    if ($mode eq 'config') {
+        print <<"EOF";
+graph_title CouchDB database $dbname documents
+graph_args --base 1000 --lower-limit 0
+graph_vlabel documents
+graph_category couchdb
+graph_printf %.0lf
+docs.draw AREASTACK
+docs.label documents available
+docs.min 0
+docs_deleted.draw AREASTACK
+docs_deleted.label documents deleted
+docs_deleted.min 0
+EOF
+    } elsif (defined($json)) {
+        say "docs.value $json->{'doc_count'}";
+        say "docs_deleted.value $json->{'doc_del_count'}";
+    } else {
+        say "docs.value U";
+        say "docs_deleted.value U";
+    }
+}
+
+
+sub database_fragmentation {
+    my ($json, $mode) = @_;
+    my $dbname = $json->{'db_name'};
+    my $munin_dbname = munin_graph_name_escape($dbname);
+
+    say "multigraph couchdb_db_${munin_dbname}_frag";
+    if ($mode eq 'config') {
+        print <<"EOF";
+graph_title CouchDB database $dbname fragmentation
+graph_args --base 1024 --lower-limit 0
+graph_vlabel database disk size
+graph_category couchdb
+graph_printf %.0lf
+data_size.draw AREASTACK
+data_size.label data size
+data_size.min 0
+disk_size.draw AREASTACK
+disk_size.label disk size overhead
+disk_size.min 0
+EOF
+    } elsif (defined($json)) {
+        my $overhead = $json->{'disk_size'} - $json->{'data_size'};
+        say "data_size.value $json->{'data_size'}";
+        say "disk_size.value $overhead";
+    } else {
+        say "data_size.value U";
+        say "disk_size.value U";
+    }
+}
+
+
+sub munin_graph_name_escape {
+    my $value = shift;
+    $value =~ s/[\/\$+()-]/_/g;
+    return $value;
 }
 
 

@@ -203,6 +203,7 @@ graph and see high write activity, but for most cases you could say for sure
 who generates it. Combining these graphs together for the same period may
 give you the answer is this activity is related to CouchDB and how if it is.
 
+
 #### Users ####
 
 **Warning:** these graphs are *disabled* by default. To enable them you should:
@@ -222,6 +223,51 @@ may be a sign for worry about server security.
 The `couchdb_users` graph shows users from [authentication database][18] and
 tracks `registered` and `deleted` amount of them. This helps to estimate size of
 your users database growing and decreasing in time.
+
+
+### Database Metrics ###
+
+`munin-plugin-couchdb` also allows to monitor few databases metrics that could
+be useful. To enable it you need to set `env.monitor_databases yes` variable
+in your plugin's configuration file and explicitly define list of databases
+which would be monitored in `env.databases`. For example:
+
+    [couchdb]
+    env.uri    http://localhost:5984
+    env.username  admin
+    env.password  s3cR1t
+    env.monitor_databases  yes
+    env.databases  mailbox, db/with/slashes, data+ba$ed
+
+Note, that user for provided credential should have read access to the specified
+databases to request [database information][19] from them.
+
+#### Documents Count ####
+
+The `couchdb_db_${dbname}_docs` graph shows amount of existed and deleted
+documents in specific database.
+
+CouchDB doesn't physically removes documents on `DELETE` leaving tombstone
+instead to be able replicate this information to others databases and to prevent
+accidental  "resurrection" of such documents during push replication.
+
+However, when amount of deleted documents becomes significantly greater than
+existed ones, this may seriously affect on consumed disk space. Such "graveyard
+databases" are needed in cleanup from deleted documents (in case when it's ever
+possible) and this graph helps to detect them.
+
+
+#### Database Fragmentation ####
+
+The `couchdb_db_${dbname}_frag` graph tracks database `disk_size` grow in time
+and overhead caused over `data_size`.
+
+Databases are needs to be compacted from time to time to retain used disk space
+by old documents revisions, but it's hard to note when compaction is worth to
+run especially since it's heavy disk I/O operation: you probably wouldn't
+compact 1TiB database just to free 20GiB. This graph helps to find answers on
+these two questions: "when?" and "how much?".
+
 
 ## License ##
 
@@ -247,3 +293,4 @@ your users database growing and decreasing in time.
 [16]: http://docs.couchdb.org/en/latest/api/server/configuration.html#get--_config
 [17]: http://docs.couchdb.org/en/latest/config/misc.html#stats/samples
 [18]: http://docs.couchdb.org/en/latest/intro/security.html#authentication-database
+[19]: http://docs.couchdb.org/en/latest/api/database/common.html#get--db
