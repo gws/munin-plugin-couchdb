@@ -50,7 +50,8 @@ This plugin also gathers all metrics from CouchDB via HTTP API, so it causes
 so overhead: one request to fetch `max_dbs_open` from [/_config][16] resource,
 one request to fetch all stats from [/_stats][13], 3 more requests (by default)
 for `couchdb_request_times` graph per each sample and optional request to
-[/_active_tasks][15] if allowed. In total 5-6 requests per stats update.
+[/_active_tasks][15] if allowed plus one per each monitored database. In total
+at least 6 requests per stats update.
 
 
 #### Request Methods ####
@@ -64,6 +65,7 @@ requests in context of used method. It counts the next methods:
 - `PUT`
 - `DELETE`
 - `COPY`
+
 
 #### Requests Time ####
 
