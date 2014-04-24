@@ -1,0 +1,334 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>html { font-size: 100%; overflow-y: scroll; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+
+body{
+  color:#444;
+  font-family:Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman',
+              "Hiragino Sans GB", "STXihei", "微软雅黑", serif;
+  font-size:12px;
+  line-height:1.5em;
+  background:#fefefe;
+  width: 45em;
+  margin: 10px auto;
+  padding: 1em;
+  outline: 1300px solid #FAFAFA;
+}
+
+a{ color: #0645ad; text-decoration:none;}
+a:visited{ color: #0b0080; }
+a:hover{ color: #06e; }
+a:active{ color:#faa700; }
+a:focus{ outline: thin dotted; }
+a:hover, a:active{ outline: 0; }
+
+span.backtick {
+  border:1px solid #EAEAEA;
+  border-radius:3px;
+  background:#F8F8F8;
+  padding:0 3px 0 3px;
+}
+
+::-moz-selection{background:rgba(255,255,0,0.3);color:#000}
+::selection{background:rgba(255,255,0,0.3);color:#000}
+
+a::-moz-selection{background:rgba(255,255,0,0.3);color:#0645ad}
+a::selection{background:rgba(255,255,0,0.3);color:#0645ad}
+
+p{
+margin:1em 0;
+}
+
+img{
+max-width:100%;
+}
+
+h1,h2,h3,h4,h5,h6{
+font-weight:normal;
+color:#111;
+line-height:1em;
+}
+h4,h5,h6{ font-weight: bold; }
+h1{ font-size:2.5em; }
+h2{ font-size:2em; border-bottom:1px solid silver; padding-bottom: 5px; }
+h3{ font-size:1.5em; }
+h4{ font-size:1.2em; }
+h5{ font-size:1em; }
+h6{ font-size:0.9em; }
+
+blockquote{
+color:#666666;
+margin:0;
+padding-left: 3em;
+border-left: 0.5em #EEE solid;
+}
+hr { display: block; height: 2px; border: 0; border-top: 1px solid #aaa;border-bottom: 1px solid #eee; margin: 1em 0; padding: 0; }
+
+
+pre , code, kbd, samp { 
+  color: #000; 
+  font-family: monospace; 
+  font-size: 0.88em; 
+  border-radius:3px;
+  background-color: #F8F8F8;
+  border: 1px solid #CCC; 
+}
+pre { white-space: pre; white-space: pre-wrap; word-wrap: break-word; padding: 5px 12px;}
+pre code { border: 0px !important; padding: 0;}
+code { padding: 0 3px 0 3px; }
+
+b, strong { font-weight: bold; }
+
+dfn { font-style: italic; }
+
+ins { background: #ff9; color: #000; text-decoration: none; }
+
+mark { background: #ff0; color: #000; font-style: italic; font-weight: bold; }
+
+sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-align: baseline; }
+sup { top: -0.5em; }
+sub { bottom: -0.25em; }
+
+ul, ol { margin: 1em 0; padding: 0 0 0 2em; }
+li p:last-child { margin:0 }
+dd { margin: 0 0 0 2em; }
+
+img { border: 0; -ms-interpolation-mode: bicubic; vertical-align: middle; }
+
+table { border-collapse: collapse; border-spacing: 0; }
+td { vertical-align: top; }
+
+@media only screen and (min-width: 480px) {
+body{font-size:14px;}
+}
+
+@media only screen and (min-width: 768px) {
+body{font-size:16px;}
+}
+
+@media print {
+  * { background: transparent !important; color: black !important; filter:none !important; -ms-filter: none !important; }
+  body{font-size:12pt; max-width:100%; outline:none;}
+  a, a:visited { text-decoration: underline; }
+  hr { height: 1px; border:0; border-bottom:1px solid black; }
+  a[href]:after { content: " (" attr(href) ")"; }
+  abbr[title]:after { content: " (" attr(title) ")"; }
+  .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after { content: ""; }
+  pre, blockquote { border: 1px solid #999; padding-right: 1em; page-break-inside: avoid; }
+  tr, img { page-break-inside: avoid; }
+  img { max-width: 100% !important; }
+  @page :left { margin: 15mm 20mm 15mm 10mm; }
+  @page :right { margin: 15mm 10mm 15mm 20mm; }
+  p, h2, h3 { orphans: 3; widows: 3; }
+  h2, h3 { page-break-after: avoid; }
+}
+</style><title>README</title></head><body><h1 id="munin-plugin-for-couchdb">Munin Plugin for CouchDB</h1>
+<p><a href="https://github.com/gws/munin-plugin-couchdb">munin-plugin-couchdb</a> is the <a href="http://munin-monitoring.org/">Munin</a> plugin that allows to monitor
+<a href="http://couchdb.apache.org/">Apache CouchDB</a> instance.</p>
+<h2 id="install-and-setup">Install and Setup</h2>
+<p>First of all, ensure that your system has installed <a href="http://www.perl.org/">Perl 5.12+</a> and
+two additional libraries: <a href="http://search.cpan.org/dist/LWP-UserAgent-Determined/">LWP::UserAgent</a> and <a href="http://search.cpan.org/dist/JSON/">JSON</a>. Sure, you would
+also need to have <a href="http://munin-monitoring.org/">Munin</a> installed.</p>
+<p>The plugin installation is quite trivial operation</p>
+<ol>
+<li><code>git clone https://github.com/gws/munin-plugin-couchdb</code></li>
+<li><code>cp munin-plugin/couchdb_ /etc/munin/plugins</code></li>
+<li>Read the docs via <code>perldoc couchdb_</code></li>
+<li>Create <code>/etc/munin/plugin-conf.d/couchdb</code> and setup proper configuration</li>
+<li>Check that it works: <code>su munin -c '/usr/sbin/munin-run couchdb_'</code></li>
+</ol>
+<p>For additional information about plugins installation consult with
+<a href="https://munin.readthedocs.org/en/latest/plugin/use.html#installing">Munin docs</a>.</p>
+<h3 id="setting-auth-credentials">Setting Auth Credentials</h3>
+<p>The <code>munin-plugin-couchdb</code> is able to gather statistics not only
+from <a href="http://docs.couchdb.org/en/latest/api/server/common.html#stats">/_stats</a> resource (which doesn't requires any authentication by
+default unless <a href="http://docs.couchdb.org/en/latest/config/auth.html#couch_httpd_auth/require_valid_user">require_valid_user</a> is set on) but also from other
+resources like <a href="http://docs.couchdb.org/en/latest/api/server/common.html#active-tasks">/_active_tasks</a> which requires to provide CouchDB server
+administrator's credentials.</p>
+<p>Leaving such credentials in plain text within config file is <strong>dangerous</strong>, so
+make sure that plugin's configuration file is readable only for trusted users.</p>
+<p>If you're going to monitor remote server (not on localhost) make sure that
+you're using secure connection with it (HTTPS or SSH-tunnel) to not transfer
+credentials in plain text over the network.</p>
+<h2 id="monitoring">Monitoring</h2>
+<h3 id="httpd-metrics">HTTPD Metrics</h3>
+<p>These metrics are related to <a href="https://github.com/mochi/mochiweb">Mochiweb</a> -
+the CouchDB's HTTP server which runs the API and communicates with the world.</p>
+<p>This plugin also gathers all metrics from CouchDB via HTTP API, so it causes
+so overhead: one request to fetch <code>max_dbs_open</code> from <a href="http://docs.couchdb.org/en/latest/api/server/configuration.html#get--_config">/_config</a> resource,
+one request to fetch all stats from <a href="http://docs.couchdb.org/en/latest/api/server/common.html#stats">/_stats</a>, 3 more requests (by default)
+for <code>couchdb_request_times</code> graph per each sample and optional request to
+<a href="http://docs.couchdb.org/en/latest/api/server/common.html#active-tasks">/_active_tasks</a> if allowed plus one per each monitored database. In total
+at least 6 requests per stats update.</p>
+<h4 id="request-methods">Request Methods</h4>
+<p>The <code>couchdb_httpd_request_methods</code> graph provides information about all HTTP
+requests in context of used method. It counts the next methods:</p>
+<ul>
+<li><code>HEAD</code></li>
+<li><code>GET</code></li>
+<li><code>POST</code></li>
+<li><code>PUT</code></li>
+<li><code>DELETE</code></li>
+<li><code>COPY</code></li>
+</ul>
+<p><img alt="Request methods" src="http://gws.github.io/munin-plugin-couchdb/images/request-methods.png" /></p>
+<h4 id="request-times">Request Times</h4>
+<p>The <code>couchdb_request_times</code> graph shows stddev/mean of HTTP request time within
+each <a href="http://docs.couchdb.org/en/latest/config/misc.html#stats/samples">sampling range</a>.</p>
+<p>In CouchDB configuration information isn't available, the default samples
+(<code>[60, 300, 900]</code>) will be used. Note, that in this case for each sample that
+doesn't match value defined in <a href="http://docs.couchdb.org/en/latest/config/misc.html#stats/samples">stats/samples</a> option this graph will
+print zeros.</p>
+<p><img alt="Request times" src="http://gws.github.io/munin-plugin-couchdb/images/request-times.png" /></p>
+<h4 id="requests-by-type">Requests by Type</h4>
+<p>The <code>couchdb_httpd_requests</code> graph shows rate of HTTP requests in context of
+their type:</p>
+<ul>
+<li><code>HTTP requests</code>: overall amount of HTTP requests</li>
+<li><code>bulk requests</code>: how often were used <a href="http://docs.couchdb.org/en/latest/api/database/bulk-api.html#post--db-_bulk_docs">bulk updates</a></li>
+<li><code>view reads</code>: amount of requests to the <a href="http://docs.couchdb.org/en/latest/api/ddoc/views.html">view indexes</a></li>
+<li><code>temporary view reads</code>: amount of requests to the <a href="http://docs.couchdb.org/en/latest/api/database/temp-views.html#post--db-_temp_view">temporary view indexes</a></li>
+</ul>
+<p><img alt="Requests by type" src="http://gws.github.io/munin-plugin-couchdb/images/http-requests.png" /></p>
+<h4 id="continuous-changes-feeds-listeners">Continuous Changes Feeds Listeners</h4>
+<p>While <code>clients_requesting_changes</code> metric is in the same group as
+<code>bulk_requests</code>, <code>temporary_view_reads</code> and others,
+the <code>couchdb_clients_requesting_changes</code> graph shows not requests rate, but
+the current amount of active clients to continuous changes feeds.</p>
+<p>This graph also helps to roughly estimate amount of continuous replications
+that are running against monitored instance.</p>
+<p><img alt="Continuous changes feeds listeners" src="http://gws.github.io/munin-plugin-couchdb/images/continuous-changes-feeds-listeners.png" /></p>
+<h4 id="response-status-codes">Response Status Codes</h4>
+<p>The <code>couchdb_httpd_status_codes</code> graph provides information about HTTP
+responses in context of <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html">status code</a>.</p>
+<p>Keeping eye on amount of HTTP <code>4xx</code> and <code>5xx</code> responses helps you provide
+quality service for you users. Normally, you want to see no <code>500</code> errors at all.
+Having high amount of <code>401</code> errors could say about authentication problems
+while <code>403</code> tell you that something or someone actively doing things that he's
+shouldn't do.</p>
+<p><img alt="Response status codes" src="http://gws.github.io/munin-plugin-couchdb/images/http-status-codes.png" /></p>
+<h3 id="server-metrics">Server Metrics</h3>
+<p>These metrics are related to whole server instance.</p>
+<h4 id="authentication-cache">Authentication Cache</h4>
+<p>The <code>couchdb_auth_cache</code> graph shows rate of authentication cache hits/misses.</p>
+<p>CouchDB keeps some amount of user credentials in memory to speedup
+authentication process by elimination of additional database lookups.
+This cache size is limited by the configuration option <a href="http://docs.couchdb.org/en/latest/config/auth.html#couch_httpd_auth/auth_cache_size">auth_cache_size</a>.
+On what this affects? In short, when user login CouchDB first looks for user
+credentials what associated with provided login name in auth cache and if they
+miss there then it reads credentials from auth database (in other words,
+from disk).</p>
+<p>The <code>auth_cache_miss</code> metric is highly related to <code>HTTP 401</code> responses one,
+so there are three cases that are worth to be looked for:</p>
+<ul>
+<li>
+<p>High <code>cache misses</code> and high <code>401</code> responses: something brute forces your
+  server by iterating over large set of user names that doesn't exists for your
+  instance</p>
+</li>
+<li>
+<p>High <code>cache misses</code> and low <code>401</code> responses: your <code>auth_cache size</code> is
+  too small to handle all your active users. try to increase his capacity
+  to reduce disk I/O</p>
+</li>
+<li>
+<p>Low <code>cache misses</code> and high <code>401</code> responses: much likely something tries
+  to brute force passwords for existed accounts on your server</p>
+</li>
+</ul>
+<p>Note that "high" and "low" in metrics world should be read as "anomaly high"
+and "anomaly low".</p>
+<p>Ok, but why do we need auth cache hit then? We need it as an ideal value
+to compare misses counter with. Just for instance, is 10 cache misses a high
+value? What about 100 or 1000? Having cache hits rate at some point helps
+to answer on this question.</p>
+<p><img alt="Authentication cache ratio" src="http://gws.github.io/munin-plugin-couchdb/images/auth-cache.png" title="Whoa! Someone really tries to do bad things there" /></p>
+<h4 id="databases-io">Databases I/O</h4>
+<p>The <code>couchdb_database_io</code> graph shows overall databases read/write rate.</p>
+<p><img alt="Databases I/O" src="http://gws.github.io/munin-plugin-couchdb/images/database-io.png" /></p>
+<h4 id="open-databases">Open Databases</h4>
+<p>The <code>couchdb_open_databases</code> graph shows amount of currently opened databases.</p>
+<p>CouchDB only keeps opened databases which are receives some activity: been
+requested or running the compaction. The maximum amount of opened
+databases in the same moment of time is limited by <a href="http://docs.couchdb.org/en/latest/config/couchdb.html#couchdb/max_dbs_open">max_dbs_open</a>
+configuration option.  When CouchDB hits this limit, any request to "closed"
+databases will generate the error response: <code>{error, all_dbs_active}</code>.</p>
+<p>However, once opened database doesn't remains open forever: in case of
+inactivity CouchDB eventually closes it providing more space in the room for
+others, but sometimes such cleanup may not help. This graph's goal is to help
+you setup correct <code>max_dbs_open</code> value that'll fit your needs.</p>
+<p><em>Notice:</em> If server administrator's credentials provided (need to request
+<a href="http://docs.couchdb.org/en/latest/api/server/configuration.html#get--_config">/_config</a> resource) the <code>max_dbs_open</code> configuration value will be used to
+set proper <code>warning</code> and <code>critical</code> levels.</p>
+<p><img alt="Open databases" src="http://gws.github.io/munin-plugin-couchdb/images/open-databases.png" /></p>
+<h4 id="open-files">Open Files</h4>
+<p>The <code>couchdb_open_files</code> graph shows amount of currently opened file
+descriptors.</p>
+<p><em>Notice:</em> Handling system <code>nofile</code> limit isn't implemented yet and couldn't be
+possible for remote instances.</p>
+<p><img alt="Open files" src="http://gws.github.io/munin-plugin-couchdb/images/open-files.png" /></p>
+<h4 id="active-tasks">Active Tasks</h4>
+<p><strong>Warning:</strong> this graph is <em>disabled</em> by default. To enable it you should
+set <code>env.monitor_active_tasks yes</code> in plugin configuration file and also
+provide CouchDB server administrator user. See <code>Setting Auth Credentials</code>
+section above for recommendations.</p>
+<p>The <code>couchdb_active_tasks</code> graph shows current processes that runs on CouchDB:</p>
+<ul>
+<li>Active replications, served by this CouchDB instance</li>
+<li>View index builds</li>
+<li>Database and views compactions</li>
+</ul>
+<p>This information is very valuable since some of these operations are very IO
+heavy (compactions are so). For instance, you're looking on <code>diskstats_iops</code>
+graph and see high write activity, but for most cases you could say for sure
+who generates it. Combining these graphs together for the same period may
+give you the answer is this activity is related to CouchDB and how if it is.</p>
+<p><img alt="Active tasks" src="http://gws.github.io/munin-plugin-couchdb/images/active-tasks.png" /></p>
+<h4 id="users">Users</h4>
+<p><strong>Warning:</strong> these graphs are <em>disabled</em> by default. To enable them you should
+set <code>env.monitor_users yes</code> in plugin configuration file and also
+provide CouchDB server administrator user. See <code>Setting Auth Credentials</code>
+section above for recommendations.</p>
+<p>The <code>couchdb_users</code> and <code>couchdb_admin_users</code> graphs shows total amount of known
+users by CouchDB.</p>
+<p>The <code>couchdb_admin_users</code> graph is stand alone to easily track amount of server
+administrators. In most time their number is stable and any unexpectable changes
+may be a sign for worry about server security.</p>
+<p>The <code>couchdb_users</code> graph shows users from <a href="http://docs.couchdb.org/en/latest/intro/security.html#authentication-database">authentication database</a> and
+tracks <code>registered</code> and <code>deleted</code> amount of them. This helps to estimate size of
+your users database growing and decreasing in time.</p>
+<p><img alt="CouchDB users" src="http://gws.github.io/munin-plugin-couchdb/images/users.png" /></p>
+<h3 id="database-metrics">Database Metrics</h3>
+<p><a href="https://github.com/gws/munin-plugin-couchdb">munin-plugin-couchdb</a> also allows to monitor few databases metrics that could
+be useful. To enable it you need to set <code>env.monitor_databases yes</code> variable
+in your plugin's configuration file and explicitly define list of databases
+which would be monitored in <code>env.databases</code>. For example:</p>
+<pre><code>[couchdb]
+env.uri    http://localhost:5984
+env.username  admin
+env.password  s3cR1t
+env.monitor_databases  yes
+env.databases  mailbox, db/with/slashes, data+ba$ed
+</code></pre>
+<p>Note, that user for provided credential should have read access to the specified
+databases to request <a href="http://docs.couchdb.org/en/latest/api/database/common.html#get--db">database information</a> from them.</p>
+<h4 id="documents-count">Documents Count</h4>
+<p>The <code>couchdb_db_${dbname}_docs</code> graph shows amount of existed and deleted
+documents in specific database.</p>
+<p>CouchDB doesn't physically removes documents on <code>DELETE</code> leaving tombstone
+instead to be able replicate this information to others databases and to prevent
+accidental  "resurrection" of such documents during push replication.</p>
+<p>However, when amount of deleted documents becomes significantly greater than
+existed ones, this may seriously affect on consumed disk space. Such "graveyard
+databases" are needed in cleanup from deleted documents (in case when it's ever
+possible) and this graph helps to detect them.</p>
+<p><img alt="Database documents" src="http://gws.github.io/munin-plugin-couchdb/images/database-docs.png" /></p>
+<h4 id="database-fragmentation">Database Fragmentation</h4>
+<p>The <code>couchdb_db_${dbname}_frag</code> graph tracks database <code>disk_size</code> grow in time
+and overhead caused over <code>data_size</code>.</p>
+<p>Databases are needs to be compacted from time to time to retain used disk space
+by old documents revisions, but it's hard to note when compaction is worth to
+run especially since it's heavy disk I/O operation: you probably wouldn't
+compact 1TiB database just to free 20GiB. This graph helps to find answers on
+these two questions: "when?" and "how much?".</p>
+<p><img alt="Database disk usage" src="http://gws.github.io/munin-plugin-couchdb/images/database-frag.png" /></p>
+<h2 id="license">License</h2>
+<p><a href="https://tldrlegal.com/license/beerware-license">Beerware</a></p></body></html>
