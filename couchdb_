@@ -220,25 +220,13 @@ sub get_json_resp {
 
 sub main {
     my $mode = shift || 'stats';
-    my $response = do_request('/_stats');
 
     if ($mode eq 'autoconf') {
-        if (defined($err)) {
-            say "no ($err)";
-            exit 1;
-        } elsif ($response->is_success) {
-            say "yes";
-            exit 0;
-        } else {
-            say "no";
-            exit 1;
-        }
-    } elsif (($mode eq 'config') && (!$response->is_success)) {
-        say "Unable to fetch stats from $URI";
-        exit 1;
+        do_autoconf();
     }
 
-    do_stats(get_json($response), $mode);
+    do_stats($mode);
+
     if ($MONITOR_ACTIVE_TASKS) {
         do_active_tasks($mode);
     }
@@ -251,8 +239,48 @@ sub main {
 }
 
 
+sub do_autoconf {
+    if (defined($err)) {
+        say "no ($err)";
+        exit 1;
+    }
+
+    if (defined($USERNAME) && defined($PASSWORD)) {
+        if (!do_request('/_stats')->is_success) {
+            say "no (Unable to be authenticated with specified credentials)";
+            exit 1;
+        }
+    }
+
+    if (!do_request('/_stats')->is_success) {
+        say "no (Unable to fetch stats from $URI/_stats)";
+        exit 1;
+    }
+
+    # if we retrieved config, then we have server admin credentials
+    my $is_admin = defined($CONFIG);
+
+    if ($MONITOR_ACTIVE_TASKS && !$is_admin) {
+        say "no (env.monitor_active_tasks requires server admin credentials)";
+        exit 1;
+    }
+
+    if ($MONITOR_USERS && !$is_admin) {
+        say "no (env.monitor_users requires server admin credentials)";
+        exit 1;
+    }
+
+
+    # Hooray!
+    say "yes";
+    exit 0;
+}
+
+
 sub do_stats {
-    my ($json, $mode) = @_;
+    my $mode = shift;
+    my $json = get_json_resp('/_stats');
+
     clients_requesting_changes($json, $mode);
     database_io($json, $mode);
     httpd_request_methods($json, $mode);
