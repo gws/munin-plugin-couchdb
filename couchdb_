@@ -125,6 +125,10 @@ Extend plugin to handle more stats. Various useful tweaks.
 
 Multigraph version and various improvements.
 
+=item Stéphane Alnet <stephane@shimaore.net>
+
+Replication status.
+
 =back
 
 =head1 LICENSE
