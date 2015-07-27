@@ -147,6 +147,7 @@ use strict;
 use warnings;
 use Munin::Plugin;
 require MIME::Base64;
+use URI::Escape;
 
 need_multigraph();
 
@@ -312,7 +313,8 @@ sub do_couchdb_users {
 sub do_databases {
     my $mode = shift;
     while($DATABASES =~ /([a-z][a-z0-9+\/()\$_-]+)/g) {
-        my $dbinfo = get_json_resp("/$1");
+        my $encode_uri = uri_escape("$1");
+        my $dbinfo = get_json_resp("/$encode_uri");
         database_documents($dbinfo, $mode);
         database_fragmentation($dbinfo, $mode);
     }
