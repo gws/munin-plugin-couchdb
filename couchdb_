@@ -523,7 +523,7 @@ EOF
             my $warn_rate = 0;
             my $crit_rate = 0;
             if (exists($ENV{'max_dbs_open_warn'})) {
-                $crit_rate = int($ENV{'max_dbs_open_warn'});
+                $warn_rate = int($ENV{'max_dbs_open_warn'});
             }
             if (exists($ENV{'max_dbs_open_crit'})) {
                 $crit_rate = int($ENV{'max_dbs_open_crit'});
