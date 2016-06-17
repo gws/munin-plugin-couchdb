@@ -125,6 +125,10 @@ Extend plugin to handle more stats. Various useful tweaks.
 
 Multigraph version and various improvements.
 
+=item Stéphane Alnet <stephane@shimaore.net>
+
+Replication status.
+
 =back
 
 =head1 LICENSE
@@ -296,7 +300,9 @@ sub do_stats {
 
 sub do_active_tasks {
     my $mode = shift;
-    active_tasks(get_json_resp('/_active_tasks'), $mode);
+    my $json = get_json_resp('/_active_tasks');
+    active_tasks($json, $mode);
+    replication_status($json, $mode);
 }
 
 
@@ -651,6 +657,41 @@ EOF
     }
 }
 
+
+sub replication_status {
+    my ($json, $mode) = @_;
+
+    say "multigraph couchdb_replication_status";
+    if ($mode eq 'config') {
+        print <<"EOF";
+graph_title CouchDB replication status
+graph_args --base 1000 --lower-limit 0
+graph_scale no
+graph_vlabel Replication
+graph_category couchdb
+graph_printf %.0lf
+EOF
+        for my $entry ( @$json ) {
+            if($entry->{type} eq 'replication') {
+                my $name = $entry->{doc_id} || "replicate $entry->{target} from $entry->{source}";
+                $name =~ s/\W+/_/g;
+                say "${name}_source_seq.label $name source";
+                say "${name}_source_seq.type DERIVE";
+                say "${name}_checkpointed_source_seq.label $name checkpoint";
+                say "${name}_checkpointed_source_seq.type DERIVE";
+            }
+        }
+    } elsif (defined($json)) {
+        for my $entry ( @$json ) {
+            if($entry->{type} eq 'replication') {
+                my $name = $entry->{doc_id} || "replicate $entry->{target} from $entry->{source}";
+                $name =~ s/\W+/_/g;
+                say "${name}_source_seq.value $entry->{source_seq}";
+                say "${name}_checkpointed_source_seq.value $entry->{checkpointed_source_seq}";
+            }
+        }
+    }
+}
 
 sub active_tasks {
     my ($json, $mode) = @_;
